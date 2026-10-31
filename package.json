@@ -1,0 +1,21 @@
+{
+  "name": "crawl",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run build -w @crawl/core && concurrently -n api,web -c yellow,cyan \"npm run dev -w @crawl/api\" \"npm run dev -w @crawl/web\"",
+    "build": "npm run build -w @crawl/core && npm run build -w @crawl/api && npm run build -w @crawl/web",
+    "test": "npm run build -w @crawl/core && npm run test -w @crawl/core && npm run test -w @crawl/api",
+    "typecheck": "npm run build -w @crawl/core && npm run typecheck -w @crawl/api && npm run typecheck -w @crawl/web",
+    "db:migrate": "npm run db:migrate -w @crawl/api",
+    "db:seed": "npm run db:seed -w @crawl/api",
+    "venues:import": "npm run venues:import -w @crawl/api --"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.6.3"
+  }
+}

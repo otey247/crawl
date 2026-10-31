@@ -1,0 +1,212 @@
+[
+ {
+  "osm_id": "node/1246409406",
+  "name": "Bar 101",
+  "lat": 38.608174,
+  "lng": -90.199829,
+  "amenity": "bar",
+  "address": "1724 South Broadway",
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "node/4756974187",
+  "name": "The Biergarten",
+  "lat": 38.598815,
+  "lng": -90.214489,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190514",
+  "name": "Cat's Meow",
+  "lat": 38.6016,
+  "lng": -90.210894,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190517",
+  "name": "Big Daddy's",
+  "lat": 38.601313,
+  "lng": -90.210077,
+  "amenity": "bar",
+  "address": "1000 Sidney Street",
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190520",
+  "name": "Good Luck Bar and Grill",
+  "lat": 38.601942,
+  "lng": -90.20787,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190523",
+  "name": "D's Place",
+  "lat": 38.602677,
+  "lng": -90.207311,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190527",
+  "name": "Hammerstones",
+  "lat": 38.606646,
+  "lng": -90.205144,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190530",
+  "name": "Henry's",
+  "lat": 38.607605,
+  "lng": -90.204758,
+  "amenity": "bar",
+  "address": "825 Allen Avenue",
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190533",
+  "name": "Molly's",
+  "lat": 38.608139,
+  "lng": -90.204055,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190537",
+  "name": "1860's",
+  "lat": 38.608512,
+  "lng": -90.204323,
+  "amenity": "bar",
+  "address": "1860 South 9th Street",
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190540",
+  "name": "Hardshell Cafe",
+  "lat": 38.608415,
+  "lng": -90.203967,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190554",
+  "name": "Great Grizzly Bear",
+  "lat": 38.609288,
+  "lng": -90.206778,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190560",
+  "name": "Duke's",
+  "lat": 38.608016,
+  "lng": -90.207373,
+  "amenity": "bar",
+  "address": "2001-2003 Menard Street",
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190562",
+  "name": "Bastille",
+  "lat": 38.607346,
+  "lng": -90.207734,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190573",
+  "name": "Eat Crow",
+  "lat": 38.608883,
+  "lng": -90.209402,
+  "amenity": "bar",
+  "address": "1931 South 12th Street",
+  "opening_hours": "Su 10:00-22:00; Mo-Th 11:00-00:00; Fr-Sa 11:00-01:30",
+  "cuisine": "american"
+ },
+ {
+  "osm_id": "way/559190575",
+  "name": "Soulard Stable",
+  "lat": 38.608953,
+  "lng": -90.206923,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190577",
+  "name": "Llewyln's",
+  "lat": 38.609971,
+  "lng": -90.203044,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190579",
+  "name": "International Taphouse",
+  "lat": 38.610502,
+  "lng": -90.203292,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/559190584",
+  "name": "Carson's",
+  "lat": 38.610313,
+  "lng": -90.202787,
+  "amenity": "bar",
+  "address": null,
+  "opening_hours": null,
+  "cuisine": null
+ },
+ {
+  "osm_id": "way/563136421",
+  "name": "Hi Hat",
+  "lat": 38.607231,
+  "lng": -90.207057,
+  "amenity": "bar",
+  "address": "1017 Russell Boulevard",
+  "opening_hours": "Sa-Su 11:30-01:30; Mo-Fr 16:00-01:30",
+  "cuisine": null
+ },
+ {
+  "osm_id": "relation/8869242",
+  "name": "John D. McGurk's Irish Pub and Garden",
+  "lat": 38.607583,
+  "lng": -90.210145,
+  "amenity": "bar",
+  "address": "1200 Russell Boulevard",
+  "opening_hours": "Tu-Sa 16:00-01:30; Su 16:00-24:00",
+  "cuisine": null
+ }
+]

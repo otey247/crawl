@@ -1,0 +1,14 @@
+{
+  "name": "@crawl/core",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": { "luxon": "^3.5.0" },
+  "devDependencies": { "@types/luxon": "^3.4.2", "vitest": "^2.1.8" }
+}
