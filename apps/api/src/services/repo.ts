@@ -80,7 +80,7 @@ export async function specialsForVenues(venueIds: string[], crawlId: string | nu
 }
 
 const VENUE_COLS = `v.id, v.osm_id, coalesce(v.name_override, v.name) as name, v.lat, v.lng, v.address, v.category, v.price_level,
-  v.tags, v.opening_hours, v.image_url, v.image_credit, v.neighborhood_id`;
+  v.tags, v.opening_hours, v.image_url, v.image_credit, v.status, v.status_note, v.neighborhood_id`;
 
 export function venueDTO(r: any, specials: any[], tz: string, now = Date.now()): VenueDTO {
   return {
@@ -97,6 +97,8 @@ export function venueDTO(r: any, specials: any[], tz: string, now = Date.now()):
     openNow: hoursGuard(r.opening_hours, tz).isOpenAt(now) ?? null,
     imageUrl: r.image_url,
     imageCredit: r.image_credit ?? null,
+    status: r.status ?? 'open',
+    statusNote: r.status_note ?? null,
     neighborhoodId: r.neighborhood_id,
     specials: specials.filter((s) => s.venue_id === r.id).map((s) => specialDTO(s, tz, now)),
     ...(r.distance_m != null ? { distanceM: r.distance_m } : {}),
@@ -114,7 +116,7 @@ export async function searchVenues(opts: {
   near?: { lat: number; lng: number };
   limit?: number;
 }): Promise<VenueDTO[]> {
-  const where: string[] = [];
+  const where: string[] = [`v.status = 'open'`];
   const params: unknown[] = [];
   if (opts.q) {
     params.push(`%${opts.q.toLowerCase()}%`);
@@ -139,7 +141,7 @@ export async function searchVenues(opts: {
   }
   params.push(opts.limit ?? 100);
   const rows = await query(
-    `select ${VENUE_COLS}, ${distance} as distance_m from venues v ${where.length ? 'where ' + where.join(' and ') : ''}
+    `select ${VENUE_COLS}, ${distance} as distance_m from venues v where ${where.join(' and ')}
      order by ${opts.near ? 'distance_m' : 'name'} limit $${params.length}`,
     params,
   );

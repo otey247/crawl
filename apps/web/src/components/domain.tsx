@@ -80,7 +80,9 @@ export function VenueImage({
 
 export function PhotoCredit({ credit }: { credit: ImageCreditDTO | null }) {
   if (!credit) return null;
-  const text = ['Photo', credit.author ? `by ${credit.author}` : null, credit.license ? `· ${credit.license}` : null].filter(Boolean).join(' ');
+  // Venue-supplied photos read as "Photo: <venue>"; openly licensed ones also show the license.
+  const showLicense = credit.license && !/permission|courtesy/i.test(credit.license);
+  const text = `Photo: ${credit.author ?? (credit.sourcePage ? new URL(credit.sourcePage).hostname.replace(/^www\./, '') : 'venue')}${showLicense ? ` · ${credit.license}` : ''}`;
   return credit.sourcePage ? (
     <a href={credit.sourcePage} target="_blank" rel="noreferrer" className="text-[11px] text-faint underline-offset-2 hover:underline">
       {text}

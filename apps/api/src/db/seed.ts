@@ -5,7 +5,7 @@
  * Specials here are SAMPLE data for development and demos (source = crowd, confidence 0.6).
  * They are not verified offers from these venues.
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { DateTime } from 'luxon';
 import { CITIES } from '../cities/index.js';
 import { config } from '../config.js';
@@ -30,7 +30,7 @@ const CURATION: Record<string, Curation> = {
   'Great Grizzly Bear': { category: 'bar', price: 1, tags: ['Live music', 'Dive'] },
   Bastille: { category: 'bar', price: 1, tags: ['Neighborhood bar'] },
   "Big Daddy's": { category: 'bar', price: 1, tags: ['Sports bar'] },
-  'Hi Hat': { category: 'bar', price: 1, tags: ['Neighborhood bar'] },
+  'Hi Hat': { name: 'The Hi-Hat', category: 'bar', price: 1, tags: ['Neighborhood bar', 'Patio'] },
   'Eat Crow': { category: 'bar', price: 2, tags: ['Kitchen'] },
   "Duke's": { category: 'bar', price: 1, tags: ['Sports bar'] },
   'International Taphouse': { name: 'International Tap House', category: 'bar', price: 2, tags: ['Craft beer'] },
@@ -47,11 +47,10 @@ const SAMPLE_SPECIALS: [string, string, string, number[], string, string][] = [
   ["Molly's in Soulard", '$4 Wells', 'Well drinks', [], '15:00', '19:00'],
   ['1860 Saloon', '$2 off drafts', 'While the band plays', [5, 6], '21:00', '23:00'],
   ["Hammerstone's", '$3 late-night shots', 'House shots', [4, 5, 6], '22:00', '01:00'],
-  ["Llywelyn's Pub", 'Happy hour', '$5 Guinness and half-price apps', [1, 2, 3, 4, 5], '15:00', '18:00'],
   ['Great Grizzly Bear', '$2.50 PBR', 'Tallboys', [], '19:00', '21:00'],
   ['International Tap House', '$1 off craft drafts', 'All drafts', [], '17:00', '19:00'],
   ['Bastille', '$5 cocktails', 'House cocktails', [5, 6], '18:00', '20:00'],
-  ['Bar 101', 'Cocktail hour', '$6 signature cocktails', [3, 4, 5, 6], '17:00', '19:30'],
+  ['The Hi-Hat', 'Cocktail hour', '$6 house cocktails', [3, 4, 5, 6], '17:00', '19:30'],
   ['Eat Crow', 'Happy hour', '$1 off beer and wine', [1, 2, 3, 4, 5], '15:00', '18:00'],
 ];
 
@@ -73,18 +72,35 @@ async function main() {
   }
 
   const osm: any[] = JSON.parse(readFileSync(new URL('../../data/soulard-venues.json', import.meta.url), 'utf8'));
+  const creditsFile = new URL('../../data/venue-images/credits.json', import.meta.url);
+  const credits: Record<string, { file: string; author: string | null; license: string | null; sourcePage: string | null }> = existsSync(creditsFile)
+    ? JSON.parse(readFileSync(creditsFile, 'utf8'))
+    : {};
   const venueIds = new Map<string, string>();
   for (const v of osm) {
     const cur = CURATION[v.name] ?? {};
     const category = cur.category ?? (v.amenity === 'pub' ? 'pub' : v.amenity === 'biergarten' ? 'biergarten' : 'bar');
     const row = await one(
-      `insert into venues (osm_id, name, name_override, lat, lng, address, neighborhood_id, category, price_level, tags, opening_hours, source, synced_at)
-       values ($1,$2,$3,$4,$5,$6,'soulard',$7,$8,$9,$10,'osm', now()) returning id`,
-      [v.osm_id, v.name, cur.name ?? null, v.lat, v.lng, v.address, category, cur.price ?? 1, cur.tags ?? [], v.opening_hours],
+      `insert into venues (osm_id, name, name_override, lat, lng, address, neighborhood_id, category, price_level, tags, opening_hours, source, synced_at, image_url, image_credit)
+       values ($1,$2,$3,$4,$5,$6,'soulard',$7,$8,$9,$10,'osm', now(), $11, $12) returning id`,
+      [
+        v.osm_id, v.name, cur.name ?? null, v.lat, v.lng, v.address, category, cur.price ?? 1, cur.tags ?? [], v.opening_hours,
+        credits[v.osm_id] ? `/v1/venue-images/${credits[v.osm_id].file}` : null,
+        credits[v.osm_id] ? JSON.stringify({ author: credits[v.osm_id].author, license: credits[v.osm_id].license, sourcePage: credits[v.osm_id].sourcePage }) : null,
+      ],
     );
     venueIds.set(cur.name ?? v.name, row!.id);
   }
   console.log(`Venues: ${venueIds.size} (Soulard, from OpenStreetMap)`);
+
+  // Closure reports gathered during venue research (Oct 2026). Verify before launch.
+  const REPORTED_CLOSED: Record<string, string> = {
+    "Llywelyn's Pub": 'Riverfront Times reported the Soulard location appears closed for good; the chain no longer lists it.',
+    'Bar 101': 'Website domain is parked and no recent coverage was found; may be closed.',
+  };
+  for (const [name, note] of Object.entries(REPORTED_CLOSED)) {
+    await query(`update venues set status = 'reported_closed', status_note = $2 where id = $1`, [venueIds.get(name), note]);
+  }
 
   for (const [venue, title, details, days, start, end] of SAMPLE_SPECIALS) {
     const venueId = venueIds.get(venue);
@@ -133,7 +149,7 @@ async function main() {
     start: tonight,
     stops: [
       ["Molly's in Soulard", 45],
-      ['Bar 101', 40],
+      ['The Hi-Hat', 40],
       ["Hammerstone's", 45],
       ['1860 Saloon', 50],
       ["McGurk's Irish Pub", 45],
@@ -155,7 +171,7 @@ async function main() {
     visibility: 'private',
     start: tonight.plus({ days: 6 }).set({ hour: 19, minute: 30 }),
     stops: [
-      ["Llywelyn's Pub", 50],
+      ['Eat Crow', 50],
       ['International Tap House', 45],
       ['Great Grizzly Bear', 45],
     ],
@@ -180,7 +196,7 @@ async function main() {
       ['The Biergarten', 60],
       ["Big Daddy's", 45],
       ['Bastille', 40],
-      ['Bar 101', 45],
+      ["Duke's", 45],
     ],
     members: users.slice(8, 14).map((u) => [u, 'going']),
     status: 'planned',

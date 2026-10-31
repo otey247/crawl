@@ -99,7 +99,7 @@ async function renderCard(opts: { kicker: string; title: string; lines: string[]
     <radialGradient id="glow" cx="20%" cy="100%" r="80%"><stop offset="0" stop-color="#f6b73c" stop-opacity=".35"/><stop offset="1" stop-color="#0b0b0c" stop-opacity="0"/></radialGradient>
     <linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="#0b0b0c" stop-opacity="0"/><stop offset="1" stop-color="#0b0b0c" stop-opacity="1"/></linearGradient>
   </defs>
-  <rect width="${W}" height="${H}" fill="#0b0b0c"/>
+  <rect x="${opts.photo ? photoW : 0}" width="${opts.photo ? W - photoW : W}" height="${H}" fill="#0b0b0c"/>
   ${opts.photo ? `<rect x="${photoW - 120}" y="0" width="120" height="${H}" fill="url(#fade)"/>` : `<rect width="${photoW}" height="${H}" fill="url(#glow)"/>`}
   <text x="${photoW + 60}" y="${titleY - 70}" font-family="DejaVu Sans" font-size="24" font-weight="bold" letter-spacing="4" fill="#f6b73c">${esc(opts.kicker.toUpperCase())}</text>
   ${titleLines.map((l, i) => `<text x="${photoW + 60}" y="${titleY + i * 66}" font-family="DejaVu Serif" font-size="56" font-weight="bold" fill="#f5f3ee">${esc(l)}</text>`).join('')}

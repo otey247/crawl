@@ -15,9 +15,13 @@ Plan a pub crawl on open-source maps, invite your crew, and run it live. It laun
 - **Safety card.** Call 911, the 988 Lifeline, the crawl's Designated Driver, Uber or Lyft, and two local cab companies (numbers checked against each company's own site). You can also share your location as a map link. After the crawl, members tap **I'm home**, and the organizer sees who hasn't confirmed yet.
 - **Link previews.** Invite and public crawl links show a title, date, first stop and a generated share image in iMessage, WhatsApp, Slack and similar apps.
 
-| Explore | Live crawl | Route review | People |
+| Explore | Live crawl | Safety | Offline |
 | --- | --- | --- | --- |
-| ![Explore](docs/screens/explore.png) | ![Live](docs/screens/live.png) | ![Route](docs/screens/route.png) | ![People](docs/screens/people.png) |
+| ![Explore](docs/screens/explore.png) | ![Live](docs/screens/live.png) | ![Safety](docs/screens/safety.png) | ![Offline](docs/screens/offline.png) |
+
+Invite links preview with a generated share card:
+
+![Share card](docs/screens/share-card.jpg)
 
 ## Quick start (local)
 
@@ -78,6 +82,8 @@ See `apps/api/.env.example`. The most important settings:
 - `VITE_TILES_URL` / `VITE_GLYPHS_URL` (web): an OpenMapTiles-schema vector source. The default is OpenFreeMap; point it at self-hosted tiles for production.
 
 ## Data and attribution
+
+**Venue photos** (`apps/api/data/venue-images/`): 10 Soulard bars have photos taken from each venue's **own website** and credited in-app ("Photo: McGurk's"). No openly licensed photos of these bars existed on Wikimedia Commons. **Get each venue's permission before launch, or replace the photos** through a venue-claim upload. `research-manifest.json` records the source page for every photo and why the other 11 bars have none. The other bars show illustrated art. Two venues are flagged `reported_closed` and hidden from discovery until someone verifies them: Llywelyn's Soulard and Bar 101. Re-run `npx tsx src/scripts/import-venue-images.ts <manifest> <dir>` to refresh.
 
 Venue locations, hours, roads and parks come from © OpenStreetMap contributors (ODbL). Display names, tags and price levels in the seed are app-side curation. They are stored as overrides and never written back to OSM. **The seeded drink specials are sample data for development**: they are labeled crowd-reported and are not verified offers from those venues.
 

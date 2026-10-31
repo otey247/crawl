@@ -131,3 +131,25 @@ describe('link previews', () => {
     expect(html.body).not.toContain('Tier 1 crawl');
   });
 });
+
+describe('venue photos and closures', () => {
+  it('serves curated venue photos and rejects anything else', async () => {
+    const ok = await app.inject({ method: 'GET', url: '/v1/venue-images/relation-8869242-480.jpg' });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.headers['content-type']).toBe('image/jpeg');
+    const bad = await app.inject({ method: 'GET', url: '/v1/venue-images/..%2F..%2Fpackage.json' });
+    expect(bad.statusCode).toBe(400);
+  });
+
+  it('hides reported-closed venues from search and new crawls', async () => {
+    await query(`update venues set status = 'reported_closed' where osm_id = 'way/2'`);
+    const res = await app.inject({ method: 'GET', url: '/v1/venues/search?q=bar' });
+    expect(res.json().map((v: any) => v.name)).toEqual(['Bar One']);
+    const c = await crawl(600);
+    const closed = (await one(`select id from venues where osm_id = 'way/2'`))!.id;
+    await query('delete from crawl_stops where crawl_id = $1 and venue_id = $2', [c, closed]);
+    const add = await app.inject({ method: 'POST', url: `/v1/crawls/${c}/stops`, headers: auth(org), payload: { venueId: closed } });
+    expect(add.statusCode).toBe(400);
+    expect(add.json().code).toBe('venue_closed');
+  });
+});

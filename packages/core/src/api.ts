@@ -58,6 +58,9 @@ export interface VenueDTO {
   imageUrl: string | null;
   /** Photo credit for imageUrl (author, license, where it came from). */
   imageCredit: ImageCreditDTO | null;
+  /** 'reported_closed' venues are hidden from search and can't be added to new crawls. */
+  status: 'open' | 'reported_closed' | 'closed';
+  statusNote: string | null;
   neighborhoodId: string | null;
   specials: SpecialDTO[];
   distanceM?: number;

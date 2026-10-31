@@ -37,6 +37,11 @@ export function VenueSheet({ venueId, onClose, actions }: { venueId: string | nu
           <div className="mt-1 text-right">
             <PhotoCredit credit={v.imageCredit} />
           </div>
+          {v.status !== 'open' ? (
+            <p className="mt-3 rounded-2xl border border-line-strong px-4 py-3 text-[14px]">
+              <span className="font-semibold">Reported closed.</span> <span className="text-dim">{v.statusNote}</span>
+            </p>
+          ) : null}
           <div className="mt-4 space-y-2 text-[15px]">
             {v.address ? (
               <p className="flex items-center gap-2 text-dim">

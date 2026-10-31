@@ -1,0 +1,191 @@
+[
+ {
+  "osmName": "John D. McGurk's Irish Pub and Garden",
+  "file": "john-d-mcgurks-irish-pub-and-garden.jpg",
+  "imageUrl": "https://static.spotapps.co/website_images/ab_websites/79447_website_v1/parties_left.jpg",
+  "sourcePage": "https://mcgurks.com/",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "John D. McGurk's",
+  "notes": "Garden fountain at the pub (790x994, portrait), from the private-parties section of the official site. No Commons image found. The og:image (social.jpg) is a dark interior with a logo overlay, so it was not used."
+ },
+ {
+  "osmName": "Molly's",
+  "file": "mollys-in-soulard.jpg",
+  "imageUrl": "https://images.squarespace-cdn.com/content/v1/559c42b5e4b0015f54106b2f/b82b08cc-b119-435c-b490-7282741c4ecb/PatioforYoutube-2+copy.JPEG?format=1500w",
+  "sourcePage": "https://www.mollysinsoulard.com/",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "Molly's in Soulard",
+  "notes": "Night photo of the patio, 1500x844. The og:image is only a logo. No Commons image found."
+ },
+ {
+  "osmName": "1860's",
+  "file": "1860s.jpg",
+  "imageUrl": "https://1860saloon.com/wp-content/uploads/2025/04/1860s-Game-Room-next-to-the-Saloon.jpg",
+  "sourcePage": "https://1860saloon.com/private-party-info/",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "1860 Saloon",
+  "notes": "Exterior of the 1860 Game Room next to the Saloon (1920x800 wide banner). The site's saloon-awning exterior (wp-content/uploads/2025/04/1.jpg) is only 505px wide. Site was updated in 2025 and the business appears open. No Commons image found."
+ },
+ {
+  "osmName": "Hammerstones",
+  "file": null,
+  "imageUrl": "https://hammerstones.net/wp-content/uploads/2018/07/hammerstones-1.jpg",
+  "sourcePage": "https://hammerstones.net/about-us/",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "Hammerstone's",
+  "notes": "Group selfie under the 'Hammerstone's 9th & Russell' sign, 640x480. This is the best identifiable photo on the site, but it shows identifiable people, so consider replacing it. No Commons image found. Excluded from the app: group selfie with identifiable people."
+ },
+ {
+  "osmName": "Llewyln's",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": "https://www.llywelynspub.com/",
+  "license": null,
+  "author": null,
+  "notes": "Appears closed: Riverfront Times reported that Llywelyn's in Soulard (1732 S 9th St) 'appears to close for good', and the chain's official site lists no Soulard location. No Commons image found."
+ },
+ {
+  "osmName": "Great Grizzly Bear",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": null,
+  "license": null,
+  "author": null,
+  "notes": "No official website found (guessed domains do not resolve). No Commons image found. Facebook was not checked."
+ },
+ {
+  "osmName": "Bastille",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": null,
+  "license": null,
+  "author": null,
+  "notes": "No official website found (1027 Russell Blvd; directory listings show no website). No Commons image found."
+ },
+ {
+  "osmName": "Big Daddy's Soulard",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": null,
+  "license": null,
+  "author": null,
+  "notes": "Official Soulard site not confirmed: bigdaddysbar.com is behind a Cloudflare 403. Commons has only 'Big Daddy's P7100087.jpg', which shows the Laclede's Landing location, so it was not used. The business is operating (Feb 2026 news coverage)."
+ },
+ {
+  "osmName": "Hi Hat",
+  "file": "hi-hat.jpg",
+  "imageUrl": "https://static.spotapps.co/website_images/ab_websites/238649_website_v1/video_poster.jpg",
+  "sourcePage": "https://thehihatstl.com/",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "The Hi-Hat",
+  "notes": "Street exterior with 'THE HI-HAT' awning, 1382x777. Sources list the address as 1015 or 1017 Russell Blvd (former Johnny's/Harpo's). The og:image is a food shot, so it was not used. No Commons image found."
+ },
+ {
+  "osmName": "Eat Crow",
+  "file": "eat-crow.jpg",
+  "imageUrl": "https://images.squarespace-cdn.com/content/v1/6144e9d2d3aad84408e37009/28149f7b-cfe7-40be-98f2-4fdaeb8d749c/IMG_1735.jpg?format=1500w",
+  "sourcePage": "https://eatcrowstl.com/",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "Eat Crow",
+  "notes": "Patio gate with Eat x Crow signage, 1500x1125, converted from WebP to JPEG. This is a seasonal Halloween ('Nightmare on 12th Street' pop-up) photo with a red duotone tint, so replace it with a neutral photo after the season. The og:image is only a logo. No Commons image found."
+ },
+ {
+  "osmName": "Duke's",
+  "file": "dukes.jpg",
+  "imageUrl": "https://static.wixstatic.com/media/46ab78_f03a5c6517ff4f218c4180998a080ca8~mv2.jpg",
+  "sourcePage": "https://www.dukesinsoulard.com/",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "Duke's in Soulard",
+  "notes": "Night exterior of the building with a Duke's Sports Bar logo overlay, 1280x720. The site's structured data confirms 2001 Menard St. No Commons image found."
+ },
+ {
+  "osmName": "International Taphouse",
+  "file": "international-tap-house.jpg",
+  "imageUrl": "https://static.wixstatic.com/media/4ac072_62059e57733747329aa751b81bd28b04.jpg",
+  "sourcePage": "https://www.internationaltaphouse.com/soulard",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "International Tap House",
+  "notes": "HDR interior photo from the Soulard location's gallery page, 960x640. The site-wide og:image is a generic glass and logo, so it was not used. No Commons image found."
+ },
+ {
+  "osmName": "The Biergarten",
+  "file": "the-biergarten.jpg",
+  "imageUrl": "https://cdn.builder.io/api/v1/image/assets%2F47a4570434b64b2cb1903e30621a1fbf%2Fba11207cf1dc4f0a85301830bd7f7262?format=jpg&width=1600",
+  "sourcePage": "https://www.budweisertours.com/stlbiergarten",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "Anheuser-Busch / budweisertours.com",
+  "notes": "Outdoor Biergarten tent with guests, 1600x1280, from the official A-B St. Louis brewery site. Commons has historic brewery images but none of the Biergarten."
+ },
+ {
+  "osmName": "Bar 101",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": "https://bar101stl.com/",
+  "license": null,
+  "author": null,
+  "notes": "Possibly closed: bar101stl.com is now a parked domain (redirects to /lander), and no current coverage was found. No Commons image found."
+ },
+ {
+  "osmName": "D's Place",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": null,
+  "license": null,
+  "author": null,
+  "notes": "Listings give 900 Barton St. dsplacestl.com exists but is behind a Cloudflare 403, so it could not be confirmed as the venue's site. No Commons image found."
+ },
+ {
+  "osmName": "Cat's Meow",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": null,
+  "license": null,
+  "author": null,
+  "notes": "No official website found (cash-only dive at 2600/2602 S 11th St). No Commons image found."
+ },
+ {
+  "osmName": "Hardshell Cafe",
+  "file": "hardshell-cafe.jpg",
+  "imageUrl": "https://1860saloon.com/wp-content/uploads/2025/04/1860s-Hardshell-Cafe-outside.jpg",
+  "sourcePage": "https://1860saloon.com/private-party-info/",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "1860 Saloon",
+  "notes": "Hardshell Cafe exterior and patio, 1920x800 banner. The Hardshell Cafe is part of the same business as 1860 Saloon ('1860 Saloon, Game Room & Hardshell Cafe'), so it may duplicate the 1860's entry."
+ },
+ {
+  "osmName": "Carson's",
+  "file": "carsons.jpg",
+  "imageUrl": "https://www.carsonssportsbar.com/s/cc_images/teaserbox_4232656929.jpg",
+  "sourcePage": "https://www.carsonssportsbar.com/",
+  "license": "Courtesy of the venue (permission pending)",
+  "author": "Carson's Sports Bar & Restaurant",
+  "notes": "Bar interior with TVs, 900x675. The site confirms 1712 S 9th St. The og:image is only a logo. No Commons image found."
+ },
+ {
+  "osmName": "Good Luck Bar and Grill",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": null,
+  "license": null,
+  "author": null,
+  "notes": "No website, listing or news coverage found for a Good Luck Bar and Grill in Soulard. It may be new, renamed or closed. No Commons image found."
+ },
+ {
+  "osmName": "Soulard Stable",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": null,
+  "license": null,
+  "author": null,
+  "notes": "No bar by this name was found online. The only similar name is the A-B Clydesdale Stable, which is a different place. No Commons image found."
+ },
+ {
+  "osmName": "Henry's",
+  "file": null,
+  "imageUrl": null,
+  "sourcePage": null,
+  "license": null,
+  "author": null,
+  "notes": "No website or listing found for a Henry's at 825 Allen Ave. No Commons image found."
+ }
+]

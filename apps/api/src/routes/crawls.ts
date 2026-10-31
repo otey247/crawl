@@ -164,6 +164,9 @@ export async function crawlRoutes(app: FastifyInstance) {
     const body = z.object({ venueId: uuid, dwellMin: z.number().int().min(10).max(180).default(45) }).parse(req.body);
     const count = await one<{ n: number }>('select count(*)::int as n from crawl_stops where crawl_id = $1', [id]);
     if (count!.n >= 15) throw badRequest('A crawl can have at most 15 stops');
+    const venue = await one('select status from venues where id = $1', [body.venueId]);
+    if (!venue) throw notFound('Venue not found');
+    if (venue.status !== 'open') throw badRequest('That bar has been reported closed', 'venue_closed');
     const exists = await one('select 1 from crawl_stops where crawl_id = $1 and venue_id = $2', [id, body.venueId]);
     if (exists) throw conflict('That bar is already on the crawl');
     await query(
