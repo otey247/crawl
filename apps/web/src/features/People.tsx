@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Check, CircleHelp, MoreHorizontal, Navigation, X } from 'lucide-react';
+import { Check, CircleHelp, House, MoreHorizontal, Navigation, X } from 'lucide-react';
 import { useState } from 'react';
 import { CREW_ROLES, type CrawlDetailDTO, type CrewRole, type MemberDTO, type Rsvp } from '@crawl/core';
 import { CREW_META, CrewBadge, RoleBadge, RsvpStatus } from '../components/domain';
@@ -92,6 +92,11 @@ export function People({ crawl }: { crawl: CrawlDetailDTO }) {
                 {isLive && leaderId === m.user.id ? (
                   <span className="inline-flex h-6 items-center gap-1 rounded-full border border-line-strong px-2 text-[12px] font-semibold">
                     <Navigation className="size-3 text-amber" /> Leading
+                  </span>
+                ) : null}
+                {crawl.status === 'ended' && m.homeSafeAt ? (
+                  <span className="inline-flex h-6 items-center gap-1 rounded-full bg-fg px-2 text-[12px] font-semibold text-ink">
+                    <House className="size-3.5" /> Home safe
                   </span>
                 ) : null}
                 {m.checkInCount ? <span className="text-[12px] text-dim">· {m.checkInCount} check-in{m.checkInCount > 1 ? 's' : ''}</span> : null}

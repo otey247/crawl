@@ -12,6 +12,8 @@ RUN npm run build -w @crawl/core && npm run build -w @crawl/api && npm prune --o
 
 FROM node:22-bookworm-slim
 ENV NODE_ENV=production
+# Fonts for server-rendered link-preview images.
+RUN apt-get update && apt-get install -y --no-install-recommends fontconfig fonts-dejavu-core && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/node_modules node_modules
 COPY --from=build /app/packages/core/package.json packages/core/package.json

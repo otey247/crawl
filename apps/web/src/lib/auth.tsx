@@ -2,7 +2,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { MeDTO } from '@crawl/core';
 import { api, tokenStore } from './api';
+import { disablePush } from './push';
 import { resetSocket } from './socket';
+import { postToWorker } from './sw';
 
 interface AuthState {
   me: MeDTO | null;
@@ -30,6 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [qc],
   );
   const signOut = useCallback(() => {
+    // Stop this device's alerts and drop cached crawl data before the next person signs in.
+    void disablePush();
+    void postToWorker({ type: 'clear-user-data' });
     tokenStore.set(null);
     resetSocket();
     qc.clear();

@@ -80,7 +80,7 @@ export async function specialsForVenues(venueIds: string[], crawlId: string | nu
 }
 
 const VENUE_COLS = `v.id, v.osm_id, coalesce(v.name_override, v.name) as name, v.lat, v.lng, v.address, v.category, v.price_level,
-  v.tags, v.opening_hours, v.image_url, v.neighborhood_id`;
+  v.tags, v.opening_hours, v.image_url, v.image_credit, v.neighborhood_id`;
 
 export function venueDTO(r: any, specials: any[], tz: string, now = Date.now()): VenueDTO {
   return {
@@ -96,6 +96,7 @@ export function venueDTO(r: any, specials: any[], tz: string, now = Date.now()):
     openingHours: r.opening_hours,
     openNow: hoursGuard(r.opening_hours, tz).isOpenAt(now) ?? null,
     imageUrl: r.image_url,
+    imageCredit: r.image_credit ?? null,
     neighborhoodId: r.neighborhood_id,
     specials: specials.filter((s) => s.venue_id === r.id).map((s) => specialDTO(s, tz, now)),
     ...(r.distance_m != null ? { distanceM: r.distance_m } : {}),
@@ -255,6 +256,7 @@ export function memberDTO(r: any): MemberDTO {
     locationSharing: r.location_sharing,
     joinedAt: r.joined_at,
     checkInCount: Number(r.check_in_count ?? 0),
+    homeSafeAt: r.home_safe_at ?? null,
   };
 }
 
@@ -393,6 +395,7 @@ export async function loadCrawlDetail(crawlId: string, viewerId: string | null, 
     latestProposal,
     live,
     permissions: permissionsFor(membership?.role),
+    safety: (findNeighborhood(row.neighborhood_id) ?? findNeighborhood(DEFAULT_NEIGHBORHOOD))!.city.safety,
     startedAt: row.started_at,
     endedAt: row.ended_at,
   };

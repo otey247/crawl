@@ -27,6 +27,9 @@ services:
       CORS_ORIGINS: ${APP_URL:-http://localhost:8080}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       VALHALLA_URL: ${VALHALLA_URL:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
       INLINE_WORKERS: 'false'
       DEV_LOGIN: ${DEV_LOGIN:-true}
       NODE_ENV: ${NODE_ENV:-development}

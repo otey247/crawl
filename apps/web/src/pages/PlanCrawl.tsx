@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowDown, ArrowUp, Lock, LockOpen, Minus, Plus, Search, Tag as TagIcon, Trash2 } from 'lucide-react';
+import { GripVertical, Lock, LockOpen, Minus, Plus, Search, Tag as TagIcon, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { CrawlDetailDTO, RouteDTO, StopDTO } from '@crawl/core';
@@ -11,6 +11,7 @@ import { SpecialForm, SpecialRow, VenueSheet } from '../features/VenueSheet';
 import { api } from '../lib/api';
 import { fmtDuration, fmtWhen } from '../lib/format';
 import { useCrawlChannel } from '../lib/socket';
+import { useDragReorder } from '../lib/useDragReorder';
 import { VenueRow } from './Explore';
 
 type Step = 'stops' | 'route' | 'invite';
@@ -38,6 +39,7 @@ export function PlanCrawl() {
   const updateStop = useMutation({ mutationFn: (v: { stopId: string; dwellMin?: number; locked?: boolean }) => api.updateStop(id!, v.stopId, v), onSuccess: set, onError: onErr });
   const reorder = useMutation({ mutationFn: (order: string[]) => api.reorderStops(id!, order), onSuccess: set, onError: onErr });
   const onRouteChange = useCallback((r: RouteDTO | null) => setShownRoute(r), []);
+  const drag = useDragReorder(crawl.data?.stops.map((s) => s.id) ?? [], (order) => reorder.mutate(order));
 
   const c = crawl.data;
   const stopVenueIds = useMemo(() => new Set(c?.stops.map((s) => s.venue.id)), [c?.stops]);
@@ -57,11 +59,7 @@ export function PlanCrawl() {
     .map((s) => ({ s, i: order.indexOf(s.id) }))
     .map(({ s, i }) => ({ id: s.id, lat: s.venue.lat, lng: s.venue.lng, number: (i >= 0 ? i : s.position) + 1, name: s.venue.name, category: s.venue.category }));
   const totalMin = c.stops.reduce((t, s) => t + s.dwellMin, 0);
-  const move = (i: number, d: -1 | 1) => {
-    const ids = c.stops.map((s) => s.id);
-    [ids[i], ids[i + d]] = [ids[i + d], ids[i]];
-    reorder.mutate(ids);
-  };
+  const byId = new Map(c.stops.map((s) => [s.id, s]));
 
   return (
     <div className="min-h-full pb-28">
@@ -132,22 +130,24 @@ export function PlanCrawl() {
             ) : null}
 
             <ol className="mt-5 space-y-3">
-              {c.stops.map((s, i) => (
-                <li key={s.id} className="rounded-3xl border border-line bg-surface p-4">
+              {drag.order.map((id, i) => {
+                const s = byId.get(id)!;
+                return (
+                <li key={s.id} ref={drag.register(s.id)} className={`rounded-3xl border bg-surface p-4 transition-shadow ${drag.dragging === s.id ? 'border-amber shadow-float' : 'border-line'}`}>
                   <div className="flex items-start gap-3">
                     <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-amber text-[13px] font-bold">{i + 1}</span>
                     <button className="min-w-0 flex-1 text-left" onClick={() => setVenueId(s.venue.id)}>
                       <p className="truncate text-[17px] font-semibold">{s.venue.name}</p>
                       <p className="truncate text-[13px] text-dim">{s.venue.address ?? s.venue.tags.join(' · ')}</p>
                     </button>
-                    <div className="flex shrink-0 gap-1">
-                      <button aria-label="Move up" disabled={i === 0 || reorder.isPending} onClick={() => move(i, -1)} className="flex size-9 items-center justify-center rounded-full border border-line disabled:opacity-30">
-                        <ArrowUp className="size-4" />
-                      </button>
-                      <button aria-label="Move down" disabled={i === c.stops.length - 1 || reorder.isPending} onClick={() => move(i, 1)} className="flex size-9 items-center justify-center rounded-full border border-line disabled:opacity-30">
-                        <ArrowDown className="size-4" />
-                      </button>
-                    </div>
+                    <button
+                      aria-label={`Reorder ${s.venue.name}. Drag, or use arrow keys.`}
+                      disabled={reorder.isPending}
+                      {...drag.handleProps(s.id)}
+                      className="flex size-10 shrink-0 items-center justify-center rounded-full border border-line text-dim hover:text-fg disabled:opacity-40"
+                    >
+                      <GripVertical className="size-5" />
+                    </button>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1 rounded-full border border-line p-1">
@@ -185,7 +185,8 @@ export function PlanCrawl() {
                     </div>
                   ) : null}
                 </li>
-              ))}
+                );
+              })}
             </ol>
             {c.stops.length === 0 ? <p className="mt-6 text-center text-[15px] text-dim">Tap bars on the map or search to add your first stop.</p> : null}
             {c.stops.length >= 2 ? (

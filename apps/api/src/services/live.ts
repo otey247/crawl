@@ -20,10 +20,11 @@ import {
   type StopDTO,
 } from '@crawl/core';
 import { config } from '../config.js';
-import { one, query, tx } from '../db/pool.js';
+import { one, query, tx, type Queryable } from '../db/pool.js';
 import { badRequest } from '../lib/errors.js';
 import { hoursGuard } from './hours.js';
 import { crawlMemberIds, notify } from './notify.js';
+import { runReminders } from './reminders.js';
 import { emitToCrawl, emitToHosts, emitToParticipants } from './realtime.js';
 import { getCrawlRow, loadStops, messageDTO, specialRule, specialsForVenues, type CrawlRow } from './repo.js';
 
@@ -261,6 +262,24 @@ export async function systemMessage(crawlId: string, body: string) {
   emitToCrawl(crawlId, 'chat.message', messageDTO(row));
 }
 
+/** The Navigator leads the group's position when one is assigned; otherwise the organizer. */
+export async function leaderFor(crawlId: string, db?: Queryable): Promise<string | null> {
+  const nav = await one<{ user_id: string }>(`select user_id from memberships where crawl_id = $1 and crew_role = 'navigator' and rsvp <> 'declined'`, [crawlId], db);
+  return nav?.user_id ?? null;
+}
+
+/** Re-point the live leader after a crew change (Navigator assigned or cleared). */
+export async function syncLeader(crawlId: string): Promise<void> {
+  const crawl = await getCrawlRow(crawlId);
+  if (crawl.status !== 'live') return;
+  const leader = (await leaderFor(crawlId)) ?? crawl.organizer_id;
+  const changed = await one(`update live_state set leader_user_id = $2 where crawl_id = $1 and leader_user_id is distinct from $2 returning crawl_id`, [crawlId, leader]);
+  if (!changed) return;
+  const u = await one('select display_name from users where id = $1', [leader]);
+  await systemMessage(crawlId, `${u!.display_name} is now leading the group’s location.`);
+  emitToCrawl(crawlId, 'crawl.updated', { crawlId });
+}
+
 export async function startCrawl(crawlId: string, userId: string): Promise<void> {
   const crawl = await getCrawlRow(crawlId);
   if (crawl.status === 'live') return;
@@ -272,7 +291,7 @@ export async function startCrawl(crawlId: string, userId: string): Promise<void>
     await db.query(
       `insert into live_state (crawl_id, leader_user_id) values ($1, $2)
        on conflict (crawl_id) do update set leader_user_id = excluded.leader_user_id, updated_at = now()`,
-      [crawlId, crawl.organizer_id ?? userId],
+      [crawlId, (await leaderFor(crawlId, db)) ?? crawl.organizer_id ?? userId],
     );
   });
   await systemMessage(crawlId, 'The crawl is live. Have fun and look out for each other.');
@@ -346,6 +365,19 @@ export async function markDeparted(crawlId: string, at = new Date()): Promise<vo
   const { dto } = await compute(crawlId, false);
   const next = dto.schedule.find((s) => s.phase === 'next');
   emitToCrawl(crawlId, 'stop.departed', { stopId, departedAt: at.toISOString(), nextStopId: next?.stopId ?? null, eta: next?.eta ?? null });
+  if (next) {
+    const crawl = await getCrawlRow(crawlId);
+    const v = await one(`select coalesce(v.name_override, v.name) as name from crawl_stops s join venues v on v.id = s.venue_id where s.id = $1`, [next.stopId]);
+    const eta = next.eta ? DateTime.fromISO(next.eta, { zone: crawl.timezone }).toFormat('h:mm a') : null;
+    await notify(await crawlMemberIds(crawlId, { excludeDeclined: true }), {
+      kind: 'group.leaving',
+      title: `Group’s heading to ${v!.name}`,
+      body: eta ? `ETA ${eta}. Tap for walking directions.` : 'Tap for walking directions.',
+      crawlId,
+      tag: `group.leaving:${crawlId}`,
+      push: true,
+    });
+  }
   await evaluateLive(crawlId);
 }
 
@@ -500,6 +532,11 @@ export function startLiveTicker(acquireLock: (key: string, ttlMs: number) => Pro
       ticking = false;
     }
   }, config.live.tickS * 1000);
+
+  setInterval(async () => {
+    if (!(await acquireLock('tick:reminders', 55_000))) return;
+    await runReminders().catch((e) => console.error('[reminders]', e));
+  }, 60_000);
 
   setInterval(async () => {
     if (!(await acquireLock('tick:sim', SIM_STEP_MS - 200))) return;

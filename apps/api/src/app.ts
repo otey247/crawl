@@ -9,8 +9,10 @@ import { HttpError } from './lib/errors.js';
 import { authRoutes } from './routes/auth.js';
 import { crawlRoutes } from './routes/crawls.js';
 import { liveRoutes } from './routes/live.js';
+import { ogRoutes } from './routes/og.js';
 import { photoRoutes } from './routes/photos.js';
 import { socialRoutes } from './routes/social.js';
+import { venueImageRoutes } from './routes/venueImages.js';
 import { venueRoutes } from './routes/venues.js';
 import { redis } from './services/queue.js';
 
@@ -47,6 +49,8 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
       await v1.register(liveRoutes);
       await v1.register(photoRoutes);
       await v1.register(socialRoutes);
+      await v1.register(ogRoutes);
+      await v1.register(venueImageRoutes);
     },
     { prefix: '/v1' },
   );

@@ -8,7 +8,7 @@ import { config } from '../config.js';
 import { one, query, tx } from '../db/pool.js';
 import { badRequest, conflict, forbidden, notFound } from '../lib/errors.js';
 import { TOKEN_PARAM, UUID_PARAM, token128 } from '../lib/ids.js';
-import { liveStateFor, systemMessage } from '../services/live.js';
+import { liveStateFor, syncLeader, systemMessage } from '../services/live.js';
 import { notify } from '../services/notify.js';
 import { approveRoute, createRouteJob, invalidateRoute } from '../services/optimizer.js';
 import { enqueueRoute } from '../services/queue.js';
@@ -462,6 +462,7 @@ export async function crawlRoutes(app: FastifyInstance) {
       }
     }
     if (body.role) await syncUserRooms(target, id, body.role);
+    if (body.crewRole !== undefined) await syncLeader(id);
     return member;
   });
 

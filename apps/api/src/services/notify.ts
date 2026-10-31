@@ -1,5 +1,6 @@
 import type { NotificationDTO } from '@crawl/core';
 import { query } from '../db/pool.js';
+import { sendWebPush } from './push.js';
 import { emitToUser } from './realtime.js';
 
 export interface NotifyInput {
@@ -10,6 +11,10 @@ export interface NotifyInput {
   data?: Record<string, unknown>;
   /** Also deliver as a push notification to backgrounded devices. */
   push?: boolean;
+  /** Where tapping the notification opens. Defaults to the crawl. */
+  url?: string;
+  /** Replaces an earlier notification with the same tag on the device. */
+  tag?: string;
 }
 
 export function notificationDTO(r: any): NotificationDTO {
@@ -24,7 +29,13 @@ export async function notify(userIds: string[], n: NotifyInput): Promise<void> {
     [userIds, n.crawlId ?? null, n.kind, n.title, n.body, JSON.stringify(n.data ?? {})],
   );
   for (const r of rows) emitToUser(r.user_id, 'notification', notificationDTO(r));
-  if (n.push) await sendPush(userIds, n).catch((err) => console.warn('[push]', err.message));
+  if (n.push) {
+    const url = n.url ?? (n.crawlId ? `/crawls/${n.crawlId}` : '/invites');
+    await Promise.all([
+      sendWebPush(userIds, { title: n.title, body: n.body, url, tag: n.tag ?? (n.crawlId ? `${n.kind}:${n.crawlId}` : n.kind) }).catch((err) => console.warn('[push]', err.message)),
+      sendPush(userIds, n).catch((err) => console.warn('[push]', err.message)),
+    ]);
+  }
 }
 
 /** Expo push (FCM + APNs). Devices register tokens via PUT /v1/me/push-tokens. */

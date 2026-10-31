@@ -1,12 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Check, LogOut, MapPinned, Pencil } from 'lucide-react';
+import { Bell, Check, LogOut, MapPinned, Pencil } from 'lucide-react';
 import { DateTime } from 'luxon';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CategoryIcon } from '../components/domain';
 import { Avatar, Button, Empty, Spinner, inputCls } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { disablePush, enablePush, pushState, type PushState } from '../lib/push';
 
 export function Profile() {
   const { me, signOut, refresh } = useAuth();
@@ -101,12 +102,59 @@ export function Profile() {
         )}
       </section>
 
-      <section className="mt-10 space-y-2 border-t border-line pt-6 pb-4">
+      <NotificationsSetting />
+
+      <section className="mt-6 space-y-2 border-t border-line pt-6 pb-4">
         <p className="text-[13px] text-dim">Drink responsibly. Plan your ride home, and use the Designated Driver role to keep track of who’s driving.</p>
         <Button variant="secondary" className="mt-3 w-full" onClick={signOut}>
           <LogOut className="size-4" /> Sign out
         </Button>
       </section>
     </div>
+  );
+}
+
+function NotificationsSetting() {
+  const [state, setState] = useState<PushState | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    pushState().then(setState).catch(() => setState('unsupported'));
+  }, []);
+  const sub =
+    state === 'on'
+      ? 'Reminders, live alerts and home-safe check-ins on this device.'
+      : state === 'denied'
+        ? 'Blocked in your browser settings. Allow notifications for Crawl to turn them on.'
+        : state === 'unsupported'
+          ? 'This browser doesn’t support push. On iPhone, add Crawl to your Home Screen first.'
+          : 'Get start reminders, “group is leaving” and specials alerts.';
+  return (
+    <section className="mt-10 flex items-center gap-3 border-t border-line pt-6">
+      <Bell className="size-6 shrink-0 text-amber" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[16px] font-semibold">Notifications</p>
+        <p className="text-[13px] text-dim">{sub}</p>
+      </div>
+      {state === 'on' || state === 'off' ? (
+        <Button
+          size="sm"
+          variant={state === 'on' ? 'secondary' : 'primary'}
+          loading={busy}
+          onClick={async () => {
+            setBusy(true);
+            try {
+              if (state === 'on') {
+                await disablePush();
+                setState('off');
+              } else setState(await enablePush());
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {state === 'on' ? 'Turn off' : 'Turn on'}
+        </Button>
+      ) : null}
+    </section>
   );
 }

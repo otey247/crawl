@@ -3,7 +3,7 @@ import { Clock, MapPin, Plus, ThumbsUp } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SpecialDTO, VenueDTO } from '@crawl/core';
-import { SourceLabel, VenueArt } from '../components/domain';
+import { PhotoCredit, SourceLabel, VenueImage } from '../components/domain';
 import { Button, Field, Sheet, Spinner, errorMessage, inputCls, useToast } from '../components/ui';
 import { api, type SpecialInput } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -33,7 +33,10 @@ export function VenueSheet({ venueId, onClose, actions }: { venueId: string | nu
         </div>
       ) : (
         <div className="pb-2">
-          <VenueArt name={v.name} category={v.category} compact className="h-36 w-full rounded-2xl" />
+          <VenueImage name={v.name} category={v.category} imageUrl={v.imageUrl} compact className="h-44 w-full rounded-2xl" />
+          <div className="mt-1 text-right">
+            <PhotoCredit credit={v.imageCredit} />
+          </div>
           <div className="mt-4 space-y-2 text-[15px]">
             {v.address ? (
               <p className="flex items-center gap-2 text-dim">

@@ -1,5 +1,6 @@
 import { Beer, Camera, Car, Check, CircleHelp, Compass, Crown, Martini, Shield, TreeDeciduous, Wine, X } from 'lucide-react';
-import type { CrewRole, MemberRole, Rsvp, SpecialDTO, SpecialState, VenueDTO } from '@crawl/core';
+import { useState } from 'react';
+import type { CrewRole, ImageCreditDTO, MemberRole, Rsvp, SpecialDTO, SpecialState, VenueDTO } from '@crawl/core';
 import { RSVP_LABELS } from '@crawl/core';
 
 export function CategoryIcon({ category, className = 'size-5' }: { category: VenueDTO['category']; className?: string }) {
@@ -40,6 +41,52 @@ export function VenueArt({ name, category, className = '', compact }: { name: st
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Real venue photo when we have one (480 px variant for small tiles), illustrated art otherwise. */
+export function VenueImage({
+  name,
+  category,
+  imageUrl,
+  className = '',
+  compact,
+  size = 'full',
+}: {
+  name: string;
+  category: VenueDTO['category'];
+  imageUrl: string | null | undefined;
+  className?: string;
+  compact?: boolean;
+  size?: 'full' | 'thumb';
+}) {
+  const [failed, setFailed] = useState(false);
+  if (!imageUrl || failed) return <VenueArt name={name} category={category} className={className} compact={compact} />;
+  const src = size === 'thumb' && imageUrl.startsWith('/v1/venue-images/') ? imageUrl.replace(/\.jpg$/, '-480.jpg') : imageUrl;
+  return (
+    <div className={`relative overflow-hidden bg-raised ${className}`}>
+      <img src={src} alt={`${name}`} loading="lazy" onError={() => setFailed(true)} className="absolute inset-0 size-full object-cover" />
+      {!compact ? (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-3">
+            <p className="font-display text-[15px] font-semibold leading-tight text-fg [text-shadow:0_2px_8px_rgba(0,0,0,.8)] line-clamp-2">{name}</p>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+export function PhotoCredit({ credit }: { credit: ImageCreditDTO | null }) {
+  if (!credit) return null;
+  const text = ['Photo', credit.author ? `by ${credit.author}` : null, credit.license ? `· ${credit.license}` : null].filter(Boolean).join(' ');
+  return credit.sourcePage ? (
+    <a href={credit.sourcePage} target="_blank" rel="noreferrer" className="text-[11px] text-faint underline-offset-2 hover:underline">
+      {text}
+    </a>
+  ) : (
+    <span className="text-[11px] text-faint">{text}</span>
   );
 }
 

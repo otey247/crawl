@@ -11,7 +11,10 @@ import { Itinerary } from '../features/Itinerary';
 import { LiveCrawlView, type CrawlTab } from '../features/LiveCrawlView';
 import { People, RsvpToggle } from '../features/People';
 import { PhotoGallery } from '../features/PhotoGallery';
+import { PushPrompt } from '../features/PushPrompt';
 import { RouteReview } from '../features/RoutePanel';
+import { HomeSafeCard, SafetyButton } from '../features/Safety';
+import { useOfflineCrawl } from '../lib/offline';
 import { ApiError, api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { fmtDuration, fmtWhen } from '../lib/format';
@@ -57,12 +60,13 @@ function CrawlOverview({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; tab: Craw
   const totalMin = crawl.approvedRoute ? crawl.approvedRoute.totalS / 60 : crawl.stops.reduce((t, s) => t + s.dwellMin, 0);
   const pins = crawl.stops.map((s, i) => ({ id: s.id, lat: s.venue.lat, lng: s.venue.lng, number: i + 1, name: s.venue.name, category: s.venue.category, state: ended ? ('visited' as const) : undefined }));
   const memberTabs = p.isMember;
+  useOfflineCrawl(crawl);
 
   return (
     <div className="min-h-full pb-10">
       <MapView className="h-[34vh] min-h-[240px]" center={crawl.stops[0]?.venue ?? { lat: 38.6083, lng: -90.2052 }} zoom={15.2} stops={pins} route={crawl.approvedRoute?.geometry} fitKey={crawl.id} padding={{ top: 80, bottom: 50, left: 50, right: 50 }}>
         <div className="absolute inset-x-0 top-0">
-          <TopBar transparent back="/" right={p.canEdit && !ended ? <Link to={`/crawls/${crawl.id}/plan`} className="inline-flex h-11 items-center gap-1.5 rounded-full bg-ink/90 px-4 text-[14px] font-semibold shadow-float"><Pencil className="size-4" /> Edit plan</Link> : null} />
+          <TopBar transparent back="/" right={<div className="flex gap-2">{p.isMember ? <SafetyButton crawl={crawl} /> : null}{p.canEdit && !ended ? <Link to={`/crawls/${crawl.id}/plan`} className="inline-flex h-11 items-center gap-1.5 rounded-full bg-ink/90 px-4 text-[14px] font-semibold shadow-float"><Pencil className="size-4" /> Edit plan</Link> : null}</div>} />
         </div>
       </MapView>
 
@@ -103,6 +107,8 @@ function CrawlOverview({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; tab: Craw
 
         {/* Primary actions */}
         <div className="mt-5 space-y-3">
+          {ended && p.isMember ? <HomeSafeCard crawl={crawl} /> : null}
+          {p.isMember && !ended ? <PushPrompt /> : null}
           {!p.isMember && !ended ? (
             me ? (
               <div className="flex gap-2">

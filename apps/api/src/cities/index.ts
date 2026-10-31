@@ -1,5 +1,5 @@
 import { readFileSync, existsSync } from 'node:fs';
-import type { LatLng } from '@crawl/core';
+import type { LatLng, SafetyInfoDTO } from '@crawl/core';
 
 export interface NeighborhoodConfig {
   id: string;
@@ -18,6 +18,8 @@ export interface CityConfig {
   timezone: string;
   center: LatLng;
   crowdedAfterHour: number;
+  /** Shown on the in-app safety card. Cab numbers are verified against each company's own site. */
+  safety: SafetyInfoDTO;
   neighborhoods: NeighborhoodConfig[];
 }
 
@@ -28,6 +30,18 @@ export const CITIES: CityConfig[] = [
     timezone: 'America/Chicago',
     center: { lat: 38.6083, lng: -90.2052 },
     crowdedAfterHour: 21,
+    safety: {
+      emergency: '911',
+      crisisLine: { label: '988 Suicide & Crisis Lifeline', phone: '988' },
+      cabs: [
+        { name: 'Laclede Cab', phone: '+13146523456', url: 'https://www.lacledecab.com' },
+        { name: 'St. Louis County Cab', phone: '+13149915300', url: 'https://www.countycab.com' },
+      ],
+      rideApps: [
+        { name: 'Uber', url: 'https://m.uber.com/ul/?action=setPickup&pickup=my_location' },
+        { name: 'Lyft', url: 'https://ride.lyft.com/' },
+      ],
+    },
     neighborhoods: [
       {
         id: 'soulard',

@@ -7,6 +7,7 @@ import { CrewBadge } from '../components/domain';
 import { Avatar, Empty, Spinner, errorMessage, useToast } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { enqueue, isNetworkError, useOutbox, type OutboxItem } from '../lib/outbox';
 import { getSocket } from '../lib/socket';
 
 type Page = { items: MessageDTO[]; hasMore: boolean };
@@ -36,6 +37,10 @@ export function Chat({ crawl }: { crawl: CrawlDetailDTO }) {
       }),
     onSuccess: (m) => qc.setQueryData<Page>(key, (old) => (old ? (old.items.some((x) => x.id === m.id) ? old : { ...old, items: [...old.items, m] }) : old)),
     onError: (e, body) => {
+      if (isNetworkError(e)) {
+        enqueue({ kind: 'chat', crawlId: crawl.id, body });
+        return;
+      }
       setText(body);
       toast({ title: 'Message not sent', body: errorMessage(e) });
     },
@@ -52,6 +57,7 @@ export function Chat({ crawl }: { crawl: CrawlDetailDTO }) {
   }, [count]);
 
   const items = messages.data?.items ?? [];
+  const pending = useOutbox().filter((o): o is Extract<OutboxItem, { kind: 'chat' }> => o.kind === 'chat' && o.crawlId === crawl.id);
   return (
     <div className="flex flex-col">
       {messages.isLoading ? (
@@ -96,6 +102,15 @@ export function Chat({ crawl }: { crawl: CrawlDetailDTO }) {
           })}
         </div>
       )}
+      {pending.map((p) => (
+        <div key={p.id} className="flex flex-row-reverse items-end gap-2 pt-1">
+          <span className="w-8 shrink-0" />
+          <div className="flex max-w-[78%] flex-col items-end">
+            <div className="rounded-[20px] border border-dashed border-amber px-4 py-2.5 text-[15px] leading-snug text-fg">{p.body}</div>
+            <p className="mt-0.5 px-1 text-[11px] text-faint">Waiting for signal</p>
+          </div>
+        </div>
+      ))}
       <div ref={bottom} />
       <form
         className="sticky bottom-0 -mx-4 flex items-center gap-2 border-t border-line bg-ink px-4 py-3"
@@ -105,7 +120,8 @@ export function Chat({ crawl }: { crawl: CrawlDetailDTO }) {
           const body = text.trim();
           if (!body) return;
           setText('');
-          send.mutate(body);
+          if (!navigator.onLine) enqueue({ kind: 'chat', crawlId: crawl.id, body });
+          else send.mutate(body);
         }}
       >
         <input

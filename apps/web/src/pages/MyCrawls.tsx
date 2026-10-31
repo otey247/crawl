@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChevronRight, Plus, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { CrawlSummaryDTO } from '@crawl/core';
-import { CrewBadge, VenueArt } from '../components/domain';
+import { CrewBadge, VenueImage } from '../components/domain';
 import { Button, Empty, PageSpinner } from '../components/ui';
 import { api } from '../lib/api';
 import { fmtWhen } from '../lib/format';
@@ -49,7 +49,7 @@ export function CrawlRow({ crawl, right }: { crawl: CrawlSummaryDTO; right?: Rea
   const m = crawl.myMembership;
   return (
     <Link to={`/crawls/${crawl.id}`} className="flex items-center gap-3 rounded-3xl border border-line bg-surface p-2.5 pr-4 hover:border-line-strong">
-      <VenueArt name={crawl.cover?.venueName ?? crawl.title} category={crawl.cover?.category ?? 'pub'} compact className="size-[76px] shrink-0 rounded-2xl" />
+      <VenueImage name={crawl.cover?.venueName ?? crawl.title} category={crawl.cover?.category ?? 'pub'} imageUrl={crawl.cover?.imageUrl} size="thumb" compact className="size-[76px] shrink-0 rounded-2xl" />
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-wider text-dim">
           {crawl.status === 'live' ? <span className="size-2 rounded-full bg-alert" /> : null}

@@ -10,6 +10,10 @@ Plan a pub crawl on open-source maps, invite your crew, and run it live. It laun
 - **Shared photo album per crawl.** Photos upload directly to storage through presigned URLs. The server makes thumbnails and runs a moderation check. The album has a Newest / By bar view, a swipe viewer, reporting and auto-hide, and a .zip download once the crawl ends.
 - **Group chat** for each crawl, in real time.
 - **Visited History.** Check in at each stop during the crawl. Once the crawl ends, those bars show up as a completed list in your profile.
+- **Offline mode.** Opening a live crawl (or one starting within a day) saves the itinerary, specials, chat and the map tiles for that area. Chat messages and check-ins made without signal are queued and sent automatically when the connection returns.
+- **Push notifications** (Web Push): a nudge to people who RSVP'd Maybe the day before, a heads-up an hour before start, "group is heading to X" when the group leaves a stop, live specials alerts, and a home-safe check after the crawl.
+- **Safety card.** Call 911, the 988 Lifeline, the crawl's Designated Driver, Uber or Lyft, and two local cab companies (numbers checked against each company's own site). You can also share your location as a map link. After the crawl, members tap **I'm home**, and the organizer sees who hasn't confirmed yet.
+- **Link previews.** Invite and public crawl links show a title, date, first stop and a generated share image in iMessage, WhatsApp, Slack and similar apps.
 
 | Explore | Live crawl | Route review | People |
 | --- | --- | --- | --- |

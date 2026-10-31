@@ -3,7 +3,7 @@ import { CalendarDays, ChevronDown, ChevronRight, Footprints, Navigation, Plus, 
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { haversineM, type CrawlSummaryDTO, type VenueDTO } from '@crawl/core';
-import { CategoryIcon, VenueArt } from '../components/domain';
+import { CategoryIcon, VenueImage } from '../components/domain';
 import { MapView, type MapStop } from '../components/MapView';
 import { AvatarStack, Button, Chip, Empty, IconButton, Sheet, inputCls } from '../components/ui';
 import { VenueSheet } from '../features/VenueSheet';
@@ -81,8 +81,8 @@ export function Explore() {
           <Chip active icon={<CalendarDays className="size-4" />} onClick={() => setPicker('when')}>
             {WHEN_LABEL[when]} <ChevronDown className="size-4" />
           </Chip>
-          <Chip active={walking} icon={<Footprints className="size-4" />} onClick={() => setWalking((x) => !x)}>
-            Walking
+          <Chip active={walking} icon={<Footprints className="size-4" />} onClick={() => setWalking((x) => !x)} aria-label="Only bars within a 10-minute walk">
+            10-min walk
           </Chip>
           <Chip active={specialsOnly} icon={<TagIcon className="size-4" />} onClick={() => setSpecialsOnly((x) => !x)}>
             Specials
@@ -91,6 +91,16 @@ export function Explore() {
             Public
           </Chip>
         </div>
+        {walking ? (
+          <p className="mt-2 text-[13px] text-dim">
+            Showing bars within a 10-minute walk of {geo.position && origin === geo.position ? 'you' : `the center of ${hood?.name ?? 'Soulard'}`}.
+            {!geo.position ? (
+              <button className="ml-1 font-semibold text-amber" onClick={() => geo.request()}>
+                Use my location
+              </button>
+            ) : null}
+          </p>
+        ) : null}
       </header>
 
       {/* Map */}
@@ -223,7 +233,7 @@ function FeaturedCrawl({ crawl, onOpen }: { crawl: CrawlSummaryDTO; onOpen: () =
   const live = crawl.status === 'live';
   return (
     <button onClick={onOpen} className="flex w-full gap-4 rounded-3xl border border-line bg-surface p-3 text-left transition hover:border-line-strong">
-      <VenueArt name={crawl.cover?.venueName ?? crawl.title} category={crawl.cover?.category ?? 'pub'} className="h-auto min-h-[176px] w-[38%] shrink-0 rounded-2xl" />
+      <VenueImage name={crawl.cover?.venueName ?? crawl.title} category={crawl.cover?.category ?? 'pub'} imageUrl={crawl.cover?.imageUrl} className="h-auto min-h-[176px] w-[38%] shrink-0 rounded-2xl" />
       <div className="min-w-0 flex-1 py-1 pr-1">
         <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
           <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-dim">
@@ -262,7 +272,7 @@ function BarCard({ venue, number, onClick }: { venue: VenueDTO & { distanceM: nu
   const special = venue.specials.find((s) => s.liveNow) ?? venue.specials[0];
   return (
     <button onClick={onClick} className="flex w-[330px] shrink-0 gap-3 rounded-3xl border border-line bg-surface p-2.5 text-left hover:border-line-strong">
-      <VenueArt name={venue.name} category={venue.category} compact className="size-[104px] shrink-0 rounded-2xl" />
+      <VenueImage name={venue.name} category={venue.category} imageUrl={venue.imageUrl} size="thumb" compact className="size-[104px] shrink-0 rounded-2xl" />
       <div className="min-w-0 flex-1 py-1">
         <div className="flex items-center gap-2">
           {number ? <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border-2 border-amber text-[12px] font-bold">{number}</span> : null}

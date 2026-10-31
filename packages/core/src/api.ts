@@ -56,9 +56,24 @@ export interface VenueDTO {
   /** null when OSM has no hours for the venue. */
   openNow: boolean | null;
   imageUrl: string | null;
+  /** Photo credit for imageUrl (author, license, where it came from). */
+  imageCredit: ImageCreditDTO | null;
   neighborhoodId: string | null;
   specials: SpecialDTO[];
   distanceM?: number;
+}
+
+export interface ImageCreditDTO {
+  author: string | null;
+  license: string | null;
+  sourcePage: string | null;
+}
+
+export interface SafetyInfoDTO {
+  emergency: string;
+  crisisLine: { label: string; phone: string };
+  cabs: { name: string; phone: string; url: string }[];
+  rideApps: { name: string; url: string }[];
 }
 
 export interface NeighborhoodDTO {
@@ -93,6 +108,8 @@ export interface MemberDTO {
   locationSharing: boolean;
   joinedAt: string;
   checkInCount: number;
+  /** Set when the member confirms they got home after the crawl. */
+  homeSafeAt: string | null;
 }
 
 export interface RouteLegDTO {
@@ -219,6 +236,7 @@ export interface CrawlDetailDTO extends CrawlSummaryDTO {
   latestProposal: RouteDTO | null;
   live: LiveStateDTO | null;
   permissions: CrawlPermissions;
+  safety: SafetyInfoDTO | null;
   startedAt: string | null;
   endedAt: string | null;
 }

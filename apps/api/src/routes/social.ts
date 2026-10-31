@@ -6,7 +6,9 @@ import { one, query } from '../db/pool.js';
 import { badRequest } from '../lib/errors.js';
 import { notificationDTO } from '../services/notify.js';
 import { emitToCrawl } from '../services/realtime.js';
-import { messageDTO, requireRole } from '../services/repo.js';
+import { vapidPublicKey } from '../services/push.js';
+import { markHomeSafe } from '../services/reminders.js';
+import { getCrawlRow, loadMember, messageDTO, requireRole } from '../services/repo.js';
 
 const uuid = z.string().uuid();
 
@@ -44,6 +46,44 @@ export async function socialRoutes(app: FastifyInstance) {
     const { id } = z.object({ id: uuid }).parse(req.params);
     const { body } = z.object({ body: z.string() }).parse(req.body);
     return postMessage(id, userId(req), body);
+  });
+
+  // ---------------------------------------------------------------- web push
+
+  app.get('/push/vapid-public-key', async () => ({ publicKey: vapidPublicKey() }));
+
+  app.post('/me/push-subscriptions', { preHandler: app.authenticate }, async (req) => {
+    const body = z
+      .object({ endpoint: z.string().url().max(1000), keys: z.object({ p256dh: z.string().max(200), auth: z.string().max(100) }) })
+      .parse(req.body);
+    await query(
+      `insert into push_subscriptions (user_id, endpoint, p256dh, auth, user_agent) values ($1,$2,$3,$4,$5)
+       on conflict (endpoint) do update set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth`,
+      [userId(req), body.endpoint, body.keys.p256dh, body.keys.auth, String(req.headers['user-agent'] ?? '').slice(0, 300)],
+    );
+    return { ok: true };
+  });
+
+  app.delete('/me/push-subscriptions', { preHandler: app.authenticate }, async (req) => {
+    const { endpoint } = z.object({ endpoint: z.string().url() }).parse(req.body);
+    await query('delete from push_subscriptions where user_id = $1 and endpoint = $2', [userId(req), endpoint]);
+    return { ok: true };
+  });
+
+  // ---------------------------------------------------------------- home safe
+
+  app.post('/crawls/:id/home-safe', { preHandler: app.authenticate }, async (req) => {
+    const { id } = z.object({ id: uuid }).parse(req.params);
+    const uid = userId(req);
+    await requireRole(id, uid, 'member');
+    const crawl = await getCrawlRow(id);
+    if (crawl.status !== 'ended' && crawl.status !== 'live') throw badRequest('The crawl hasn’t started yet');
+    const at = await markHomeSafe(id, uid);
+    const member = await loadMember(id, uid);
+    emitToCrawl(id, 'member.updated', member);
+    const msg = await one(`insert into messages (crawl_id, body, kind) values ($1, $2, 'system') returning *`, [id, `${member.user.displayName} got home safe.`]);
+    emitToCrawl(id, 'chat.message', messageDTO(msg));
+    return { ok: true, homeSafeAt: at };
   });
 
   // ---------------------------------------------------------------- notifications

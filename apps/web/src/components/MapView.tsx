@@ -1,6 +1,6 @@
 import maplibregl, { type GeoJSONSource, type LngLatBoundsLike, type Map as MLMap } from 'maplibre-gl';
 import { useEffect, useRef, type ReactNode } from 'react';
-import type { VenueDTO } from '@crawl/core';
+import { haversineM, type VenueDTO } from '@crawl/core';
 import { nightStyle } from './mapStyle';
 
 export type PinState = 'visited' | 'current' | 'next' | 'upcoming' | 'skipped' | 'planned';
@@ -125,6 +125,7 @@ export function MapView({ center, zoom = 15, stops = [], venues = [], route, gho
       loaded.current = true;
       pending.current();
     });
+    m.on('zoomend', () => spreadRef.current());
     map.current = m;
     if (import.meta.env.DEV) (window as any).__crawlMap = m;
     // Keep the canvas in sync with layout changes (sheets, viewport, fonts loading).
@@ -140,6 +141,25 @@ export function MapView({ center, zoom = 15, stops = [], venues = [], route, gho
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /** Fan out stop pins that would overlap on screen at the current zoom (e.g. bars 30 m apart). */
+  const spread = () => {
+    const m = map.current;
+    if (!m) return;
+    const pins = [...markers.current.entries()].filter(([k]) => k.startsWith('s:')).map(([, mk]) => ({ mk, p: m.project(mk.getLngLat()) }));
+    const groups: (typeof pins)[] = [];
+    for (const pin of pins) {
+      const g = groups.find((grp) => grp.some((o) => Math.hypot(o.p.x - pin.p.x, o.p.y - pin.p.y) < 44));
+      if (g) g.push(pin);
+      else groups.push([pin]);
+    }
+    for (const g of groups) {
+      g.sort((a, b) => a.p.x - b.p.x);
+      g.forEach((pin, i) => pin.mk.setOffset([g.length > 1 ? (i - (g.length - 1) / 2) * 46 : 0, 0]));
+    }
+  };
+  const spreadRef = useRef(spread);
+  spreadRef.current = spread;
+
   // Sync markers and route data.
   useEffect(() => {
     const apply = () => {
@@ -148,9 +168,9 @@ export function MapView({ center, zoom = 15, stops = [], venues = [], route, gho
       (m.getSource('route') as GeoJSONSource | undefined)?.setData(line(route));
       (m.getSource('ghost') as GeoJSONSource | undefined)?.setData(line(ghostRoute));
       const next = new Map<string, { el: () => HTMLElement; lngLat: [number, number]; anchor: 'bottom' | 'center'; z: number; click?: () => void }>();
-      const stopVenueKeys = new Set(stops.map((s) => `${s.lat},${s.lng}`));
       for (const v of venues) {
-        if (stopVenueKeys.has(`${v.lat},${v.lng}`)) continue;
+        // A plain venue pin under (or right next to) a numbered stop only adds clutter.
+        if (stops.some((s) => haversineM(s, v) < 25)) continue;
         next.set(`v:${v.id}:${v.hasSpecial ? 1 : 0}`, { el: () => venueEl(v), lngLat: [v.lng, v.lat], anchor: 'center', z: 1, click: () => cbs.current.onVenueClick?.(v.id) });
       }
       for (const s of stops) {
@@ -179,6 +199,7 @@ export function MapView({ center, zoom = 15, stops = [], venues = [], route, gho
         // MapLibre replaces the label with a generic "Map marker"; restore ours.
         if (label) el.setAttribute('aria-label', label);
       }
+      spread();
     };
     if (loaded.current) apply();
     else pending.current = apply;

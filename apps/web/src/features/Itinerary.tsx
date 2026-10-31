@@ -6,6 +6,7 @@ import { Button, errorMessage, useToast } from '../components/ui';
 import { api } from '../lib/api';
 import { fmtDuration, fmtTime } from '../lib/format';
 import { useGeolocation } from '../lib/geo';
+import { enqueue, isNetworkError, useOutbox } from '../lib/outbox';
 
 export function Itinerary({ crawl }: { crawl: CrawlDetailDTO }) {
   const qc = useQueryClient();
@@ -17,13 +18,28 @@ export function Itinerary({ crawl }: { crawl: CrawlDetailDTO }) {
   const set = (c: CrawlDetailDTO) => qc.setQueryData(['crawl', crawl.id], c);
   const onErr = (e: unknown) => toast({ title: errorMessage(e) });
   const checkIn = useMutation({
-    mutationFn: (stopId: string) => api.checkIn(crawl.id, stopId, geo.position ?? undefined),
-    onSuccess: () => {
+    mutationFn: async (stopId: string) => {
+      const pos = geo.position ? { lat: geo.position.lat, lng: geo.position.lng } : undefined;
+      if (!navigator.onLine) {
+        enqueue({ kind: 'checkin', crawlId: crawl.id, stopId, pos });
+        return { queued: true };
+      }
+      try {
+        await api.checkIn(crawl.id, stopId, pos);
+        return { queued: false };
+      } catch (err) {
+        if (!isNetworkError(err)) throw err;
+        enqueue({ kind: 'checkin', crawlId: crawl.id, stopId, pos });
+        return { queued: true };
+      }
+    },
+    onSuccess: (r) => {
       qc.invalidateQueries({ queryKey: ['check-ins', crawl.id] });
-      toast({ title: 'Checked in', body: 'Saved to your Visited History when the crawl ends.' });
+      toast(r.queued ? { title: 'Check-in saved', body: 'It’ll sync as soon as you have signal.' } : { title: 'Checked in', body: 'Saved to your Visited History when the crawl ends.' });
     },
     onError: onErr,
   });
+  const queued = new Set(useOutbox().flatMap((o) => (o.kind === 'checkin' && o.crawlId === crawl.id ? [o.stopId] : [])));
   const arrive = useMutation({ mutationFn: (stopId: string) => api.arrive(crawl.id, stopId), onSuccess: set, onError: onErr });
   const skip = useMutation({ mutationFn: (v: { stopId: string; skipped: boolean }) => api.skipStop(crawl.id, v.stopId, v.skipped), onSuccess: set, onError: onErr });
 
@@ -31,7 +47,7 @@ export function Itinerary({ crawl }: { crawl: CrawlDetailDTO }) {
   const sched = new Map(live?.schedule.map((s) => [s.stopId, s]) ?? []);
   const specialsByStop = new Map<string, LiveSpecialDTO[]>();
   for (const s of live?.specials ?? []) specialsByStop.set(s.stopId, [...(specialsByStop.get(s.stopId) ?? []), s]);
-  const checked = new Set(checkIns.data?.map((c) => c.stopId));
+  const checked = new Set([...(checkIns.data?.map((c) => c.stopId) ?? []), ...queued]);
 
   return (
     <ol>
@@ -79,7 +95,7 @@ export function Itinerary({ crawl }: { crawl: CrawlDetailDTO }) {
                   {crawl.permissions.isMember && (isCurrent || done) ? (
                     checked.has(stop.id) ? (
                       <span className={`inline-flex h-9 items-center gap-1.5 text-[14px] font-semibold ${isCurrent ? '' : 'text-dim'}`}>
-                        <Check className="size-4" strokeWidth={3} /> Checked in
+                        <Check className="size-4" strokeWidth={3} /> {queued.has(stop.id) ? "Check-in saved · syncs later" : "Checked in"}
                       </span>
                     ) : (
                       <Button size="sm" variant={isCurrent ? 'secondary' : 'primary'} className={isCurrent ? '!bg-ink !text-fg' : ''} loading={checkIn.isPending && checkIn.variables === stop.id} onClick={() => checkIn.mutate(stop.id)}>

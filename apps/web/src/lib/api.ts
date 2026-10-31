@@ -167,6 +167,12 @@ export const api = {
   notifications: () => get<{ items: NotificationDTO[]; unread: number }>('/me/notifications'),
   markRead: (ids?: string[]) => post<{ ok: true }>('/me/notifications/read', { ids }),
   history: () => get<VisitedHistoryDTO>('/me/history'),
+
+  // push & safety
+  vapidKey: () => get<{ publicKey: string }>('/push/vapid-public-key'),
+  savePushSubscription: (b: { endpoint: string; keys: { p256dh: string; auth: string } }) => post<{ ok: true }>('/me/push-subscriptions', b),
+  deletePushSubscription: (endpoint: string) => request<{ ok: true }>('DELETE', '/me/push-subscriptions', { endpoint }),
+  homeSafe: (id: string) => post<{ ok: true; homeSafeAt: string }>(`/crawls/${id}/home-safe`),
 };
 
 /** Authenticated binary download (album zip). */

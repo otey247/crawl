@@ -41,7 +41,7 @@ C = Σ t_ij (1 + α s_ij + β b_ij) + λ·missed specials + μ·minutes waiting 
 | OR-Tools Python worker above 10 stops | Held–Karp up to 12, then TypeScript local search | Keeps one runtime. The worker boundary (`runRouteJob`) is where an OR-Tools or VROOM call would go. |
 | PostGIS geography columns | Plain lat/lng doubles. `002_postgis.sql` adds a geography column and GiST index when PostGIS is installed. | Runs on stock Postgres as well as the `postgis/postgis` image. |
 | Sign in with Apple / Google | Magic links, plus dev sign-in as seeded users. The `apple` / `google` providers are stubbed in `POST /auth/session`. | Needs app credentials: verify the ID token against the provider's JWKS, then upsert by email. |
-| FCM / APNs push | Notifications are stored, delivered in-app over Socket.IO, and sent through the Expo push API when a device registers a token (`PUT /me/push-tokens`). | Web push would need VAPID keys and a service worker. |
+| FCM / APNs push | Web Push (VAPID) from the service worker, plus in-app delivery over Socket.IO and the Expo push API for native tokens. Expired subscriptions (404/410) are pruned. | iOS supports Web Push only for PWAs added to the Home Screen; a native app closes that gap. |
 | Automated photo moderation | Format and size validation in `moderate()`, plus 3-report auto-hide and host hide | Wire Azure AI Content Safety or Rekognition into `moderate()`. |
 | S3 / Azure Blob | A local driver that implements presigned PUT and GET semantics, with 10-minute upload URLs and 1-hour signed reads | Implement `ObjectStorage` for S3 or Blob, and point `presignPut` at the real service. |
 | Photo retention (12 months) | Not scheduled yet | Add a daily job that deletes albums 12 months after `ended_at`, with a warning notification 30 days before. |
@@ -52,3 +52,10 @@ C = Σ t_ij (1 + α s_ij + β b_ij) + λ·missed specials + μ·minutes waiting 
 - **Age:** 21+, US.
 - **Specials data:** crowd-reported (confidence starts at 0.5, rises with confirmations, decays after 30 days), organizer-entered (0.9, scoped to one crawl), and venue-claimed (1.0). Specials below 0.4 confidence are hidden.
 - **Who edits stops:** organizers and co-hosts only.
+
+## Tier-1 additions
+
+- **Offline (`apps/web/public/sw.js`).** Hashed bundles are precached at install. Crawl API reads are network-first with a cache fallback, and are cleared on sign-out. Map tiles (z10–14, plus label glyphs) for a crawl's area are precached when a member opens a crawl that is live or starts within a day. Chat messages and check-ins made offline go into a localStorage outbox (`lib/outbox.ts`) and replay in order on reconnect. Offline mode applies to the production build only; the Vite dev server serves unbundled modules the worker doesn't cache.
+- **Reminders (`services/reminders.ts`).** These run every minute under a Redis lock and are de-duplicated by `reminders_sent (crawl, user, kind)`.
+- **Link previews (`routes/og.ts`).** nginx (and the Vite dev middleware) send known crawler user agents on `/i/:token` and `/crawls/:id` to server-rendered Open Graph pages, with a 1200×630 card rendered by sharp. Private crawls are previewed only through an invite token, and only with what the invite landing page already shows.
+- **Navigator role.** The assigned Navigator becomes the live leader, so their phone drives the group's position, ETAs and arrival detection. Every member gets walking directions to the next stop.

@@ -1,11 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, Map as MapIcon, Plus, User, Users } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { OfflineBanner } from './components/OfflineBanner';
 import { PageSpinner, useToast } from './components/ui';
 import { api } from './lib/api';
 import { useAuth } from './lib/auth';
+import { onOutboxFlushed } from './lib/outbox';
 import { useNotificationStream } from './lib/socket';
+import { registerServiceWorker } from './lib/sw';
 import { AgeGate } from './pages/AgeGate';
 import { CrawlPage } from './pages/CrawlPage';
 import { CreateCrawl } from './pages/CreateCrawl';
@@ -68,10 +71,22 @@ function WithNav({ children }: { children: ReactNode }) {
 
 export function App() {
   const toast = useToast();
+  const nav = useNavigate();
+  const qc = useQueryClient();
   const { me } = useAuth();
   useNotificationStream(me ? (title, body) => toast({ title, body }) : undefined);
+  useEffect(() => registerServiceWorker((url) => nav(url)), [nav]);
+  useEffect(
+    () =>
+      onOutboxFlushed((item) => {
+        qc.invalidateQueries({ queryKey: [item.kind === 'chat' ? 'messages' : 'check-ins', item.crawlId] });
+        qc.invalidateQueries({ queryKey: ['crawl', item.crawlId] });
+      }),
+    [qc],
+  );
   return (
     <div className="mx-auto min-h-full max-w-[520px] bg-ink sm:border-x sm:border-line">
+      <OfflineBanner />
       <Routes>
         <Route path="/signin" element={<SignIn />} />
         <Route path="/auth/verify" element={<VerifyMagicLink />} />

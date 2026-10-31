@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ChevronLeft, Clock, DoorOpen, FlagTriangleRight, LocateFixed, MapPin, Play, Square, Zap } from 'lucide-react';
+import { CloudDownload, Navigation2, AlertTriangle, ChevronLeft, Clock, DoorOpen, FlagTriangleRight, LocateFixed, MapPin, Play, Square, Zap } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { haversineM, type AtRiskDTO, type CrawlDetailDTO, type LiveSpecialDTO } from '@crawl/core';
@@ -9,7 +9,10 @@ import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { fmtTime } from '../lib/format';
 import { useGeolocation } from '../lib/geo';
+import { useOfflineCrawl } from '../lib/offline';
 import { getSocket } from '../lib/socket';
+import { PushPrompt } from './PushPrompt';
+import { SafetyButton } from './Safety';
 import { Chat } from './Chat';
 import { Itinerary } from './Itinerary';
 import { People } from './People';
@@ -45,6 +48,10 @@ export function LiveCrawlView({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; ta
   const isLeader = !!me && live?.leaderUserId === me.id;
   const sharing = isLeader || !!crawl.members.find((m) => m.user.id === me?.id)?.locationSharing;
   const [publish, setPublish] = useState(isLeader);
+  // Leadership can move mid-crawl (e.g. a Navigator is assigned); start publishing when it lands here.
+  useEffect(() => {
+    if (isLeader) setPublish(true);
+  }, [isLeader]);
   const geo = usePositionPublisher(crawl.id, publish && sharing && !live?.simulating);
 
   const set = (c: CrawlDetailDTO) => qc.setQueryData(['crawl', crawl.id], c);
@@ -77,10 +84,8 @@ export function LiveCrawlView({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; ta
     state: (sched.get(s.id)?.phase ?? 'upcoming') as PinState,
   }));
 
-  const highlights = (live?.specials ?? []).filter((s) => s.state === 'highlight');
-  const misses = (live?.specials ?? []).filter((s) => s.state === 'projected_miss');
-  const atRisk = live?.atRisk ?? [];
   const drift = Math.round((live?.driftS ?? 0) / 60);
+  const offline = useOfflineCrawl(crawl);
   const fitKey = useMemo(() => `${crawl.id}:${current?.id ?? next?.id ?? ''}`, [crawl.id, current?.id, next?.id]);
 
   return (
@@ -112,7 +117,15 @@ export function LiveCrawlView({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; ta
               </span>
             </p>
             <p className="truncate font-display text-[18px] font-semibold">{crawl.title}</p>
+            {offline === 'ready' ? (
+              <p className="flex items-center gap-1 text-[11px] font-semibold text-dim">
+                <CloudDownload className="size-3.5" /> Saved for offline
+              </p>
+            ) : offline === 'saving' ? (
+              <p className="text-[11px] font-semibold text-dim">Saving map for offline…</p>
+            ) : null}
           </div>
+          <SafetyButton crawl={crawl} />
         </div>
       </MapView>
 
@@ -121,10 +134,20 @@ export function LiveCrawlView({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; ta
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-dim">{current ? 'You’re at' : next ? 'Heading to' : 'All stops done'}</p>
-            <p className="truncate font-display text-[26px] font-bold leading-tight">{(current ?? next)?.venue.name ?? 'Nice work'}</p>
+            <p className="line-clamp-2 font-display text-[24px] font-bold leading-[1.1]">{(current ?? next)?.venue.name ?? 'Nice work'}</p>
             {next && !current ? (
-              <p className="flex items-center gap-1.5 text-[15px] text-dim tabular">
-                <Clock className="size-4" /> ETA {fmtTime(sched.get(next.id)?.eta, crawl.timezone)}
+              <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] text-dim tabular">
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="size-4" /> ETA {fmtTime(sched.get(next.id)?.eta, crawl.timezone)}
+                </span>
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${next.venue.lat},${next.venue.lng}&travelmode=walking`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-semibold text-amber"
+                >
+                  <Navigation2 className="size-4" /> Walking directions
+                </a>
               </p>
             ) : current ? (
               <p className="flex items-center gap-1.5 text-[15px] text-dim tabular">
@@ -146,15 +169,7 @@ export function LiveCrawlView({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; ta
           ) : null}
         </div>
 
-        {highlights.map((h) => (
-          <HighlightCard key={`${h.stopId}:${h.specialId}`} special={h} tz={crawl.timezone} current={h.stopId === current?.id} />
-        ))}
-        {misses.map((m) => (
-          <MissCard key={`${m.stopId}:${m.specialId}`} special={m} tz={crawl.timezone} />
-        ))}
-        {atRisk.map((r) => (
-          <AtRiskCard key={`${r.stopId}:${r.specialId}`} risk={r} tz={crawl.timezone} applying={fix.isPending} onApply={(p) => fix.mutate(p)} />
-        ))}
+        <LiveAlerts alerts={rankAlerts(live?.specials ?? [], live?.atRisk ?? [], current?.id ?? null)} tz={crawl.timezone} applying={fix.isPending} onApply={(p) => fix.mutate(p)} />
 
         {/* Location + host tools */}
         <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -178,6 +193,12 @@ export function LiveCrawlView({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; ta
             </Button>
           ) : null}
         </div>
+        {isLeader ? (
+          <p className="text-[13px] text-dim">
+            You’re leading: your phone’s location is “the group” for arrivals and ETAs. Keep Crawl open while walking.
+          </p>
+        ) : null}
+        <PushPrompt />
         {geo.error && publish ? <p className="text-[13px] text-dim">{geo.error}. The organizer can still tap “We’re here”.</p> : null}
 
         <div className="sticky top-0 z-20 -mx-4 bg-ink px-4 py-3">
@@ -194,6 +215,70 @@ export function LiveCrawlView({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; ta
         </div>
         {tab === 'plan' ? <Itinerary crawl={crawl} /> : tab === 'chat' ? <Chat crawl={crawl} /> : tab === 'photos' ? <PhotoGallery crawl={crawl} /> : <People crawl={crawl} />}
       </div>
+    </div>
+  );
+}
+
+type Alert =
+  | { kind: 'highlight'; key: string; rank: number; special: LiveSpecialDTO; current: boolean }
+  | { kind: 'risk'; key: string; rank: number; risk: AtRiskDTO }
+  | { kind: 'miss'; key: string; rank: number; special: LiveSpecialDTO };
+
+/**
+ * One ranked list instead of stacked cards: each special appears once, in the richest form the
+ * viewer can act on (hosts get fixes; everyone else gets the warning). The top alert is full size;
+ * the rest collapse into compact rows.
+ */
+export function rankAlerts(specials: LiveSpecialDTO[], atRisk: AtRiskDTO[], currentStopId: string | null): Alert[] {
+  const out: Alert[] = [];
+  const riskKeys = new Set(atRisk.map((r) => `${r.stopId}:${r.specialId}`));
+  for (const r of atRisk) {
+    const rescuable = r.fixes.some((f) => f.catchesSpecial);
+    out.push({ kind: 'risk', key: `${r.stopId}:${r.specialId}`, rank: rescuable ? 1 : 4, risk: r });
+  }
+  for (const s of specials) {
+    const key = `${s.stopId}:${s.specialId}`;
+    if (riskKeys.has(key)) continue;
+    if (s.state === 'highlight') {
+      const current = s.stopId === currentStopId;
+      out.push({ kind: 'highlight', key, rank: current ? 0 : 2, special: s, current });
+    } else if (s.state === 'at_risk' || s.state === 'projected_miss') {
+      out.push({ kind: 'miss', key, rank: s.state === 'at_risk' ? 3 : 5, special: s });
+    }
+  }
+  return out.sort((a, b) => a.rank - b.rank);
+}
+
+function LiveAlerts({ alerts, tz, applying, onApply }: { alerts: Alert[]; tz: string; applying: boolean; onApply: (p: AtRiskDTO['fixes'][number]['patch']) => void }) {
+  const [expanded, setExpanded] = useState(false);
+  if (!alerts.length) return null;
+  const [top, ...rest] = alerts;
+  const full = (a: Alert) =>
+    a.kind === 'highlight' ? (
+      <HighlightCard key={a.key} special={a.special} tz={tz} current={a.current} />
+    ) : a.kind === 'risk' ? (
+      <AtRiskCard key={a.key} risk={a.risk} tz={tz} applying={applying} onApply={onApply} />
+    ) : (
+      <MissCard key={a.key} special={a.special} tz={tz} />
+    );
+  return (
+    <div className="space-y-2" aria-label="Alerts">
+      {full(top)}
+      {rest.length ? (
+        expanded ? (
+          rest.map(full)
+        ) : (
+          <button onClick={() => setExpanded(true)} className="w-full rounded-2xl border border-line bg-surface px-4 py-3 text-left">
+            <span className="flex items-center justify-between text-[14px] font-semibold">
+              {rest.length} more alert{rest.length > 1 ? 's' : ''}
+              <span className="text-dim">Show</span>
+            </span>
+            <span className="mt-0.5 block truncate text-[13px] text-dim">
+              {rest.map((a) => (a.kind === 'risk' ? `${a.risk.title} at ${a.risk.venueName}` : `${a.special.title} at ${a.special.venueName}`)).join(' · ')}
+            </span>
+          </button>
+        )
+      ) : null}
     </div>
   );
 }
@@ -221,7 +306,7 @@ function HighlightCard({ special, tz, current }: { special: LiveSpecialDTO; tz: 
 
 function MissCard({ special, tz }: { special: LiveSpecialDTO; tz: string }) {
   return (
-    <section aria-label="Special will be missed" className="flex gap-3 rounded-3xl bg-raised p-4 shadow-float">
+    <section aria-label="Special will be missed" className="flex gap-3 rounded-3xl bg-raised p-4">
       <AlertTriangle className="mt-0.5 size-5 shrink-0 text-fg" />
       <div className="min-w-0">
         <p className="text-[16px] font-semibold">
@@ -237,11 +322,17 @@ function MissCard({ special, tz }: { special: LiveSpecialDTO; tz: string }) {
 }
 
 function AtRiskCard({ risk, tz, onApply, applying }: { risk: AtRiskDTO; tz: string; onApply: (p: AtRiskDTO['fixes'][number]['patch']) => void; applying: boolean }) {
+  const late = risk.minutesShort && risk.state === 'projected_miss' ? `${risk.minutesShort} min late` : 'under 10 min to spare';
   return (
-    <section aria-label="Organizer: special at risk" className="rounded-3xl border border-line-strong bg-surface p-4">
-      <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-dim">Organizer · {risk.state === 'at_risk' ? 'Cutting it close' : 'Will miss'}</p>
-      <p className="mt-1 text-[17px] font-semibold">
-        {risk.title} at {risk.venueName} ends {fmtTime(risk.endsAt, tz)}; ETA {fmtTime(risk.eta, tz)}.
+    <section aria-label="Special at risk" className="rounded-3xl border border-line-strong bg-surface p-4">
+      <p className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.14em] text-dim">
+        <AlertTriangle className="size-3.5" /> {risk.state === 'at_risk' ? 'Cutting it close' : 'Will miss'} · only hosts see fixes
+      </p>
+      <p className="mt-1.5 text-[17px] font-semibold leading-snug">
+        {risk.title} at {risk.venueName}
+      </p>
+      <p className="text-[14px] text-dim tabular">
+        Ends {fmtTime(risk.endsAt, tz)} · ETA {fmtTime(risk.eta, tz)} ({late})
       </p>
       {risk.fixes.length ? (
         <div className="mt-3 grid gap-2">
@@ -250,11 +341,11 @@ function AtRiskCard({ risk, tz, onApply, applying }: { risk: AtRiskDTO; tz: stri
               key={f.kind}
               disabled={applying}
               onClick={() => onApply(f.patch)}
-              className={`flex h-14 items-center justify-between rounded-2xl px-4 text-left transition active:scale-[0.99] disabled:opacity-50 ${i === 0 ? 'bg-amber text-amber-ink' : 'bg-raised border border-line'}`}
+              className={`rounded-2xl px-4 py-3 text-left transition active:scale-[0.99] disabled:opacity-50 ${i === 0 ? 'bg-amber text-amber-ink' : 'border border-line bg-raised'}`}
             >
-              <span className="text-[15px] font-semibold">{f.label}</span>
-              <span className={`text-[13px] font-semibold ${i === 0 ? '' : 'text-dim'}`}>
-                saves {Math.round(f.minutesSaved)} min{f.catchesSpecial ? ' · makes it' : ''}
+              <span className="block text-[15px] font-semibold leading-snug">{f.label}</span>
+              <span className={`mt-0.5 block text-[13px] font-medium ${i === 0 ? 'text-[#5a4210]' : 'text-dim'}`}>
+                Saves {Math.round(f.minutesSaved)} min · {f.catchesSpecial ? 'makes it in time' : 'still late'}
               </span>
             </button>
           ))}
