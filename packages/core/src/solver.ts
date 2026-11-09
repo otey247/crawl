@@ -39,6 +39,11 @@ export interface SolveInput {
   /** locked[position] = stop index that must sit at that position. */
   locked?: (number | null | undefined)[];
   timeLimitMs?: number;
+  /**
+   * Extra cost (minutes) for arriving at a stop at a given time, e.g. a patio bar during a rainy
+   * hour. Must be cheap: it runs inside the search.
+   */
+  stopPenalty?: (stop: number, arrival: number) => number;
 }
 
 export interface StopTiming {
@@ -82,7 +87,7 @@ function visit(input: SolveInput, stop: number, t: number) {
   const caught: string[] = [];
   const missed: string[] = [];
   for (const sp of s.specials) (staysCatches({ start: arrival, end: departure }, sp.windows) ? caught : missed).push(sp.id);
-  const cost = input.prefs.lambda * missed.length + input.prefs.mu * (waitS / 60);
+  const cost = input.prefs.lambda * missed.length + input.prefs.mu * (waitS / 60) + (input.stopPenalty?.(stop, arrival) ?? 0);
   return { arrival, departure, waitS, caught, missed, cost };
 }
 

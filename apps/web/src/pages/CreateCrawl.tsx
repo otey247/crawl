@@ -11,6 +11,7 @@ export function CreateCrawl() {
   const [params] = useSearchParams();
   const startVenue = params.get('venue');
   const hoods = useQuery({ queryKey: ['neighborhoods'], queryFn: api.neighborhoods, staleTime: Infinity });
+  const templates = useQuery({ queryKey: ['templates', 'soulard'], queryFn: () => api.templates('soulard') });
   const tz = 'America/Chicago';
   const now = DateTime.now().setZone(tz);
   const defaultDay = now.hour >= 20 ? now.plus({ days: 1 }) : now;
@@ -42,6 +43,18 @@ export function CreateCrawl() {
         }}
       >
         <h1 className="font-display text-[30px] font-semibold leading-tight">What’s the plan?</h1>
+        {templates.data?.length && !startVenue ? (
+          <div>
+            <span className="mb-1.5 block text-[13px] font-semibold uppercase tracking-wider text-dim">Or start from a ready-made crawl</span>
+            <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5">
+              {templates.data.map((t) => (
+                <button type="button" key={t.id} onClick={() => nav(`/templates/${t.id}`)} className="inline-flex h-10 shrink-0 items-center rounded-full border border-line bg-surface px-4 text-[14px] font-medium hover:border-line-strong">
+                  {t.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <Field label="Name">
           <input className={inputCls} required minLength={2} maxLength={80} autoFocus placeholder="Soulard Saturday Crawl" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
         </Field>

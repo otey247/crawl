@@ -2,12 +2,14 @@ import { buildApp } from './app.js';
 import { config } from './config.js';
 import { migrate } from './db/migrate.js';
 import { pool } from './db/pool.js';
+import { syncCuratedEvents } from './services/events.js';
 import { startLiveTicker } from './services/live.js';
 import { acquireLock, closeQueues, startWorkers } from './services/queue.js';
 import { attachSocket } from './socket.js';
 
 async function main() {
   await migrate((m) => console.log(`[db] ${m}`));
+  console.log(`[events] ${await syncCuratedEvents()} St. Louis events synced`);
   const app = await buildApp();
   const io = attachSocket(app);
   const workers = config.inlineWorkers ? startWorkers() : [];

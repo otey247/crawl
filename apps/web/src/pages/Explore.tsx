@@ -6,8 +6,10 @@ import { haversineM, type CrawlSummaryDTO, type VenueDTO } from '@crawl/core';
 import { CategoryIcon, VenueImage } from '../components/domain';
 import { MapView, type MapStop } from '../components/MapView';
 import { AvatarStack, Button, Chip, Empty, IconButton, Sheet, inputCls } from '../components/ui';
+import { EventBanner } from '../features/Conditions';
 import { VenueSheet } from '../features/VenueSheet';
 import { api } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { fmtDay, fmtDistance, fmtTime, priceLabel } from '../lib/format';
 import { useGeolocation } from '../lib/geo';
 
@@ -26,12 +28,16 @@ export function Explore() {
   const [picker, setPicker] = useState<'hood' | 'when' | 'search' | 'bars' | null>(null);
   const [q, setQ] = useState('');
   const geo = useGeolocation(false);
+  const { me } = useAuth();
 
   const hoods = useQuery({ queryKey: ['neighborhoods'], queryFn: api.neighborhoods, staleTime: Infinity });
   const hood = hoods.data?.find((h) => h.id === hoodId);
   const center = hood?.center ?? { lat: 38.6083, lng: -90.2052 };
   const origin = geo.position && haversineM(geo.position, center) < 5000 ? geo.position : center;
 
+  const events = useQuery({ queryKey: ['events', hoodId], queryFn: () => api.events(hoodId, 7) });
+  const templates = useQuery({ queryKey: ['templates', hoodId], queryFn: () => api.templates(hoodId) });
+  const friends = useQuery({ queryKey: ['friends-crawls'], queryFn: api.friendsCrawls, enabled: !!me });
   const crawls = useQuery({ queryKey: ['crawls', hoodId, when], queryFn: () => api.crawls({ neighborhood: hoodId, when }) });
   const venues = useQuery({ queryKey: ['venues', hoodId], queryFn: () => api.venues({ neighborhood: hoodId, limit: 200 }) });
   const searchResults = useQuery({ queryKey: ['venue-search', hoodId, q], queryFn: () => api.venues({ neighborhood: hoodId, q, limit: 30 }), enabled: picker === 'search' && q.length > 1 });
@@ -128,6 +134,11 @@ export function Explore() {
       {/* Sheet */}
       <div className="relative z-10 -mt-6 rounded-t-[28px] border-t border-line bg-ink px-4 pt-3">
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line-strong" />
+        {events.data?.length ? (
+          <div className="mb-4">
+            <EventBanner events={events.data} tz={hood?.timezone ?? 'America/Chicago'} />
+          </div>
+        ) : null}
         {featured ? (
           <FeaturedCrawl crawl={featured} onOpen={() => nav(`/crawls/${featured.id}`)} />
         ) : crawls.isLoading ? (
@@ -143,6 +154,29 @@ export function Explore() {
           </div>
         )}
 
+        {friends.data?.length ? (
+          <section className="mt-7" aria-label="Friends are going">
+            <h2 className="mb-3 font-display text-[22px] font-semibold">Friends are going</h2>
+            <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+              {friends.data.map(({ crawl: c, friends: fs }) => (
+                <button key={c.id} onClick={() => nav(`/crawls/${c.id}`)} className="w-[270px] shrink-0 rounded-3xl border border-line bg-surface p-4 text-left hover:border-line-strong">
+                  <div className="flex items-center gap-2">
+                    <AvatarStack users={fs.slice(0, 3)} size={28} />
+                    <p className="min-w-0 truncate text-[13px] text-dim">
+                      {fs[0].displayName.split(' ')[0]}
+                      {fs.length > 1 ? ` +${fs.length - 1}` : ''} going
+                    </p>
+                  </div>
+                  <p className="mt-2 font-display text-[19px] font-semibold leading-tight">{c.title}</p>
+                  <p className="mt-1 text-[13px] font-semibold uppercase tracking-wider text-dim">
+                    {fmtDay(c.startAt, c.timezone)} · {fmtTime(c.startAt, c.timezone)}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {visibleCrawls.length > 1 ? (
           <section className="mt-7">
             <h2 className="mb-3 font-display text-[22px] font-semibold">More crawls</h2>
@@ -154,6 +188,25 @@ export function Explore() {
                   <p className="mt-2 text-[14px] text-dim">
                     {c.stopCount} stops · {c.goingCount} going
                   </p>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {templates.data?.length ? (
+          <section className="mt-7" aria-label="Ready-made crawls">
+            <h2 className="mb-3 font-display text-[22px] font-semibold">Ready-made crawls</h2>
+            <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+              {templates.data.map((t) => (
+                <button key={t.id} onClick={() => nav(`/templates/${t.id}`)} className="w-[230px] shrink-0 overflow-hidden rounded-3xl border border-line bg-surface text-left hover:border-line-strong">
+                  <VenueImage name={t.stops[0]?.venue.name ?? t.title} category={t.stops[0]?.venue.category ?? 'pub'} imageUrl={t.stops[0]?.venue.imageUrl} size="thumb" compact className="h-28 w-full" />
+                  <div className="p-3.5">
+                    <p className="font-display text-[18px] font-semibold leading-tight">{t.title}</p>
+                    <p className="mt-1 truncate text-[13px] text-dim">
+                      {t.stops.length} bars · {t.tags.join(' · ') || (t.curated ? 'Curated' : 'Community')}
+                    </p>
+                  </div>
                 </button>
               ))}
             </div>

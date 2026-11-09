@@ -10,6 +10,7 @@ import { badRequest, conflict, forbidden, notFound } from '../lib/errors.js';
 import { TOKEN_PARAM, UUID_PARAM, token128 } from '../lib/ids.js';
 import { liveStateFor, syncLeader, systemMessage } from '../services/live.js';
 import { notify } from '../services/notify.js';
+import { notifyFollowers } from './friends.js';
 import { approveRoute, createRouteJob, invalidateRoute } from '../services/optimizer.js';
 import { enqueueRoute } from '../services/queue.js';
 import { emitToCrawl, syncUserRooms } from '../services/realtime.js';
@@ -108,6 +109,7 @@ export async function crawlRoutes(app: FastifyInstance) {
       await db.query(`insert into memberships (crawl_id, user_id, role, rsvp) values ($1, $2, 'organizer', 'going')`, [c.id, uid]);
       return c;
     });
+    if (body.visibility === 'public') await notifyFollowers(uid, crawl.id, 'created');
     return detail(crawl.id, uid);
   });
 
@@ -361,6 +363,7 @@ export async function crawlRoutes(app: FastifyInstance) {
       emitToCrawl(crawlId, 'member.joined', { userId: uid, displayName: u!.display_name });
       emitToCrawl(crawlId, 'member.updated', await loadMember(crawlId, uid));
       await systemMessage(crawlId, `${u!.display_name} joined the crawl.`);
+      if (rsvp === 'going') await notifyFollowers(uid, crawlId, 'going');
     }
     return !!inserted;
   }

@@ -1,9 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Bell, Check, LogOut, MapPinned, Pencil } from 'lucide-react';
+import { Bell, Check, ChevronRight, LogOut, MapPinned, Pencil, Store } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CategoryIcon } from '../components/domain';
+import { FriendsSection } from '../features/Friends';
 import { Avatar, Button, Empty, Spinner, inputCls } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -14,7 +15,7 @@ export function Profile() {
   const history = useQuery({ queryKey: ['history'], queryFn: api.history });
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(me?.displayName ?? '');
-  const save = useMutation({ mutationFn: () => api.updateMe(name), onSuccess: () => (refresh(), setEditing(false)) });
+  const save = useMutation({ mutationFn: () => api.updateMe({ displayName: name }), onSuccess: () => (refresh(), setEditing(false)) });
   if (!me) return null;
   const h = history.data;
 
@@ -100,6 +101,23 @@ export function Profile() {
             ))}
           </div>
         )}
+      </section>
+
+      <FriendsSection />
+
+      <section className="mt-10 space-y-2 border-t border-line pt-6">
+        <Link to="/venues/manage" className="flex items-center justify-between rounded-2xl bg-surface border border-line px-4 py-3.5">
+          <span className="flex items-center gap-2 text-[15px] font-semibold">
+            <Store className="size-5 text-amber" /> {me.managedVenueIds.length ? 'Manage your bar' : 'Own or manage a bar?'}
+          </span>
+          <ChevronRight className="size-5 text-dim" />
+        </Link>
+        {me.isAdmin ? (
+          <Link to="/admin/claims" className="flex items-center justify-between rounded-2xl bg-surface border border-line px-4 py-3.5">
+            <span className="text-[15px] font-semibold">Admin · venue claims</span>
+            <ChevronRight className="size-5 text-dim" />
+          </Link>
+        ) : null}
       </section>
 
       <NotificationsSetting />

@@ -83,6 +83,15 @@ describe('solver', () => {
     expect(res.best.caughtCount).toBe(1);
   });
 
+  it('schedules a patio stop outside the rainy hours', () => {
+    const input = grid(4);
+    // Stop 3 is a patio; rain from 18:30 on. Fastest path reaches it at 19:45 — wet.
+    const rainFrom = at('2026-10-31T18:30');
+    input.stopPenalty = (stop, arrival) => (stop === 3 && arrival >= rainFrom ? 0.8 * 25 : 0);
+    const res = solve(input);
+    expect(res.best.order[0]).toBe(3);
+  });
+
   it('respects locked positions', () => {
     const input = grid(6);
     input.locked = [4];

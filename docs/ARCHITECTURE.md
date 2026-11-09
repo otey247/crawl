@@ -66,3 +66,25 @@ C = Σ t_ij (1 + α s_ij + β b_ij) + λ·missed specials + μ·minutes waiting 
 - **Photographer's picks.** `photos.featured_at` can be set by the Photographer or a host. `GET /photos/picks` returns featured photos first, then the rest of the Photographer's shots. The recap orders photos the same way.
 - **Catch up (`memberships.catching_up_*`).** "On my way" targets the group's current stop, or the next stop while the group is walking. When the group departs, anyone catching up is moved to the next stop and gets a push. Arrival is confirmed on check-in, or when an opted-in shared position comes within 60 m of the target.
 - **Recap (`routes/recap.ts`).** Built once the crawl ends. Distance comes from the approved route legs between stops actually visited, with a straight-line estimate otherwise. "Specials caught" re-runs the live classifier over each stay. `GET /recap/card.png` is members-only to fetch, but the card itself contains no member photos or names, so it's safe to post.
+
+## Tier-3 additions
+
+- **Templates (`routes/templates.ts`).** Templates store `[{venueId, dwellMin}]`. Forking re-checks venue status, so closed bars drop out. A fork creates an ordinary draft crawl, which the organizer then optimizes and invites people to.
+- **Events (`services/events.ts`).**
+  - The curated calendar is synced on every boot.
+  - **Mardi Gras 2027:** the date, start time, route description, entry points and rideshare drop-offs come from Mardi Gras Inc.'s event page. No street-by-street closure list is published, so routing pads walking times by the crowd factor instead of inventing closures.
+  - **St. Patrick's Day:** a fixed calendar date.
+  - **Cardinals home games:** come from `statsapi.mlb.com` through `scripts/import-cardinals.ts`. Each counts as busy from 2 hours before first pitch to 4.5 hours after.
+- **Weather (`services/weather.ts`).**
+  - **Source:** NWS `api.weather.gov`, which is free and needs no key, with forecasts about 7 days out.
+  - **Caching:** forecasts are cached per grid cell for 30 minutes. Crawl pages read the cache and refresh it in the background, so a slow NWS response never delays a page; the optimizer waits for a fresh copy.
+  - **Outdoor stops:** biergartens, or venues tagged Patio, Beer garden, Rooftop or Courtyard.
+  - **Solver:** the solver adds `stopPenalty(stop, arrival)` = rain chance × 20 minutes for outdoor stops.
+  - **Tests:** tests stub `weatherProvider` and never call NWS.
+- **Venue claims (`routes/venuePortal.ts`).**
+  - **Email-domain path:** applies when the contact email's domain matches the venue's website. It sends a 6-digit code that expires after 30 minutes and allows 5 attempts; development returns the code in the response.
+  - **Manual path:** every other claim goes to the admin queue (`users.is_admin`).
+  - **On approval:** approving a claim sets `venues.claimed_by` and rejects competing claims.
+  - **Photos:** owner uploads replace the researched photos, which still need permission.
+  - **Insights:** venues see aggregate counts and times only.
+- **Follows (`routes/friends.ts`).** Follows are one-way with no approval step. They surface only public crawls, and only for users whose `activity_visibility` is `followers`; crawls you've already joined are excluded. Follower notifications are in-app only, with no push.

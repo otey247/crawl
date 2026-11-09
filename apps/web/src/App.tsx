@@ -19,6 +19,9 @@ import { MyCrawls } from './pages/MyCrawls';
 import { PlanCrawl } from './pages/PlanCrawl';
 import { Profile } from './pages/Profile';
 import { Recap } from './pages/Recap';
+import { Template } from './pages/Template';
+import { UserProfile } from './pages/UserProfile';
+import { AdminClaims, ManageVenue, MyVenues } from './pages/VenuePortal';
 import { SignIn, VerifyMagicLink } from './pages/SignIn';
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -99,6 +102,11 @@ export function App() {
         <Route path="/crawls/new" element={<RequireAuth><CreateCrawl /></RequireAuth>} />
         <Route path="/crawls/:id/plan" element={<RequireAuth><PlanCrawl /></RequireAuth>} />
         <Route path="/crawls/:id/recap" element={<RequireAuth><Recap /></RequireAuth>} />
+        <Route path="/templates/:id" element={<Template />} />
+        <Route path="/u/:id" element={<RequireAuth><UserProfile /></RequireAuth>} />
+        <Route path="/venues/manage" element={<RequireAuth><MyVenues /></RequireAuth>} />
+        <Route path="/venues/:id/manage" element={<RequireAuth><ManageVenue /></RequireAuth>} />
+        <Route path="/admin/claims" element={<RequireAuth><AdminClaims /></RequireAuth>} />
         <Route path="/crawls/:id" element={<CrawlPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

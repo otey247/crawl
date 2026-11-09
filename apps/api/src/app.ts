@@ -10,11 +10,14 @@ import { authRoutes } from './routes/auth.js';
 import { crawlRoutes } from './routes/crawls.js';
 import { liveRoutes } from './routes/live.js';
 import { ogRoutes } from './routes/og.js';
+import { friendRoutes } from './routes/friends.js';
 import { photoRoutes } from './routes/photos.js';
 import { recapRoutes } from './routes/recap.js';
 import { rideRoutes } from './routes/rides.js';
 import { socialRoutes } from './routes/social.js';
 import { venueImageRoutes } from './routes/venueImages.js';
+import { templateRoutes } from './routes/templates.js';
+import { venuePortalRoutes } from './routes/venuePortal.js';
 import { venueRoutes } from './routes/venues.js';
 import { redis } from './services/queue.js';
 
@@ -53,6 +56,9 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
       await v1.register(socialRoutes);
       await v1.register(ogRoutes);
       await v1.register(rideRoutes);
+      await v1.register(templateRoutes);
+      await v1.register(venuePortalRoutes);
+      await v1.register(friendRoutes);
       await v1.register(recapRoutes);
       await v1.register(venueImageRoutes);
     },

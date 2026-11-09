@@ -15,7 +15,9 @@ import {
 import { findNeighborhood, neighborhoodGeo } from '../cities/index.js';
 import { one, query, tx } from '../db/pool.js';
 import { badRequest } from '../lib/errors.js';
+import { eventsOverlapping, crowdFactorFor } from './events.js';
 import { hoursGuard } from './hours.js';
+import { hourlyForecast, isOutdoor, precipAt } from './weather.js';
 import { explainRoute, interpretPreferences } from './llm.js';
 import { crawlMemberIds, notify } from './notify.js';
 import { emitToCrawl, emitToHosts } from './realtime.js';
@@ -66,15 +68,39 @@ export interface PreparedProblem {
   input: SolveInput;
   stops: StopDTO[];
   specialTitles: Map<string, string>;
+  /** Event crowds (Mardi Gras, game days) that padded walking times, if any. */
+  crowd: { factor: number; event: string } | null;
+  /** Outdoor stops and the rain risk the solver planned around. */
+  rain: { outdoor: string[]; maxChance: number; wetFrom: number | null } | null;
 }
 
 export async function prepareProblem(crawlId: string, prefs: RoutePreferences): Promise<PreparedProblem> {
   const crawl = await getCrawlRow(crawlId);
   const stops = (await loadStops(crawlId, crawl.timezone)).filter((s) => !s.skipped);
   const points = stops.map((s) => ({ lat: s.venue.lat, lng: s.venue.lng }));
-  const matrix = await walkingMatrix(points, prefs);
+  const rawMatrix = await walkingMatrix(points, prefs);
   const startAt = new Date(crawl.start_at).getTime();
   const horizonEnd = startAt + 14 * 3600_000;
+  const plannedEnd = startAt + stops.reduce((t, s) => t + s.dwellMin * 60_000 + 600_000, 0);
+
+  // Event crowds slow everyone down: pad walking times by the event's crowd factor.
+  const events = await eventsOverlapping(crawl.neighborhood_id, startAt, plannedEnd);
+  const factor = crowdFactorFor(events);
+  const matrix = factor > 1 ? { ...rawMatrix, walkS: rawMatrix.walkS.map((row) => row.map((t) => t * factor)) } : rawMatrix;
+  const crowd = factor > 1 ? { factor, event: events[0].title } : null;
+
+  // Rain: arriving at a patio / beer-garden stop during a wet hour costs up to ~20 minutes' worth.
+  const outdoorIdx = stops.flatMap((s, i) => (isOutdoor(s.venue) ? [i] : []));
+  const forecast = outdoorIdx.length ? await hourlyForecast(stops[0].venue.lat, stops[0].venue.lng, { fresh: true }).catch(() => null) : null;
+  const relevant = forecast?.periods.filter((p) => Date.parse(p.start) + 3600_000 > startAt && Date.parse(p.start) < plannedEnd) ?? [];
+  const maxChance = relevant.length ? Math.max(...relevant.map((p) => p.precipChance)) : 0;
+  const rain =
+    forecast && outdoorIdx.length && maxChance >= 40
+      ? { outdoor: outdoorIdx.map((i) => stops[i].venue.name), maxChance, wetFrom: Date.parse(relevant.find((p) => p.precipChance >= 40)?.start ?? '') || null }
+      : null;
+  const stopPenalty = rain
+    ? (stop: number, arrival: number) => (outdoorIdx.includes(stop) ? (precipAt(forecast!.periods, arrival) / 100) * 20 : 0)
+    : undefined;
   const crowdHour = findNeighborhood(crawl.neighborhood_id)?.city.crowdedAfterHour ?? 21;
   const endsAfterCrowdHour = DateTime.fromMillis(startAt + stops.reduce((t, s) => t + s.dwellMin * 60_000, 0), { zone: crawl.timezone }).hour >= crowdHour;
 
@@ -115,8 +141,9 @@ export async function prepareProblem(crawlId: string, prefs: RoutePreferences): 
     // A locked stop keeps its current position (stops are sorted by position).
     locked: stops.map((s, pos) => (s.locked ? pos : null)),
     timeLimitMs: 3000,
+    stopPenalty,
   };
-  return { input, stops, specialTitles };
+  return { input, stops, specialTitles, crowd, rain };
 }
 
 function routeMetrics(ev: Evaluation, stops: StopDTO[]) {
@@ -153,7 +180,7 @@ export async function runRouteJob(routeId: string): Promise<void> {
   const crawl = await getCrawlRow(route.crawl_id);
   try {
     const prefs = await interpretPreferences(route.preferences.tags ?? [], route.preferences.note);
-    const { input, stops, specialTitles } = await prepareProblem(crawl.id, prefs);
+    const { input, stops, specialTitles, crowd, rain } = await prepareProblem(crawl.id, prefs);
     const requested: string[] | null = route.metrics?.requestedOrder ?? null;
 
     // Organizer's current order (by position) is the baseline we report deltas against.
@@ -191,6 +218,8 @@ export async function runRouteJob(routeId: string): Promise<void> {
       baseline: method === 'manual' ? null : { totalWalkMin: baseline.walkS / 60, caughtCount: baseline.caughtCount },
       caughtCount: best.caughtCount,
       violations: best.violations.length,
+      crowd,
+      rain: rain ? { outdoorStops: rain.outdoor, maxChance: rain.maxChance, wetFrom: rain.wetFrom ? fmt(rain.wetFrom) : null } : null,
     });
 
     await tx(async (db) => {

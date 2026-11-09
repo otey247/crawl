@@ -14,6 +14,7 @@ import { getSocket } from '../lib/socket';
 import { PushPrompt } from './PushPrompt';
 import { SafetyButton } from './Safety';
 import { CatchUpCard } from './CatchUp';
+import { WeatherCard } from './Conditions';
 import { Chat } from './Chat';
 import { Itinerary } from './Itinerary';
 import { People } from './People';
@@ -171,6 +172,7 @@ export function LiveCrawlView({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; ta
         </div>
 
         <CatchUpCard crawl={crawl} />
+        <WeatherCard weather={crawl.weather} tz={crawl.timezone} compact />
         <LiveAlerts alerts={rankAlerts(live?.specials ?? [], live?.atRisk ?? [], current?.id ?? null)} tz={crawl.timezone} applying={fix.isPending} onApply={(p) => fix.mutate(p)} />
 
         {/* Location + host tools */}

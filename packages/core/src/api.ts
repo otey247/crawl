@@ -22,6 +22,9 @@ export interface UserDTO {
 export interface MeDTO extends UserDTO {
   email: string | null;
   ageVerified: boolean;
+  isAdmin: boolean;
+  activityVisibility: 'followers' | 'nobody';
+  managedVenueIds: string[];
 }
 
 export interface SpecialDTO {
@@ -61,6 +64,8 @@ export interface VenueDTO {
   /** 'reported_closed' venues are hidden from search and can't be added to new crawls. */
   status: 'open' | 'reported_closed' | 'closed';
   statusNote: string | null;
+  /** Managed by a verified owner or manager. */
+  verified: boolean;
   neighborhoodId: string | null;
   specials: SpecialDTO[];
   distanceM?: number;
@@ -242,6 +247,10 @@ export interface CrawlDetailDTO extends CrawlSummaryDTO {
   live: LiveStateDTO | null;
   permissions: CrawlPermissions;
   safety: SafetyInfoDTO | null;
+  /** St. Louis events overlapping the crawl (parades, holidays, Cardinals home games). */
+  events: EventDTO[];
+  /** Hourly forecast for the crawl window, when it is within the forecast horizon. */
+  weather: WeatherDTO | null;
   startedAt: string | null;
   endedAt: string | null;
 }
@@ -401,4 +410,87 @@ export interface RecapDTO {
   route: [number, number][];
   photos: PhotoDTO[];
   crew: { role: CrewRole; user: UserDTO }[];
+}
+
+export interface TemplateDTO {
+  id: string;
+  slug: string | null;
+  title: string;
+  description: string | null;
+  neighborhoodId: string | null;
+  curated: boolean;
+  visibility: 'public' | 'private';
+  createdBy: UserDTO | null;
+  tags: string[];
+  uses: number;
+  stops: { venue: VenueDTO; dwellMin: number }[];
+  totalMin: number;
+}
+
+export interface EventDTO {
+  id: string;
+  kind: 'parade' | 'holiday' | 'sports' | 'festival';
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  crowdFactor: number;
+  advice: string[];
+  sourceUrl: string | null;
+  verified: boolean;
+}
+
+export interface WeatherPeriodDTO {
+  start: string;
+  temperatureF: number;
+  precipChance: number;
+  summary: string;
+}
+
+export interface WeatherDTO {
+  periods: WeatherPeriodDTO[];
+  maxPrecipChance: number;
+  minTempF: number;
+  maxTempF: number;
+  /** Patio / beer-garden stops whose planned arrival falls in a rainy hour (≥ 40%). */
+  outdoorAtRisk: { stopId: string; venueName: string; at: string; precipChance: number }[];
+  source: string;
+  fetchedAt: string;
+}
+
+export interface VenueClaimDTO {
+  id: string;
+  venue: Pick<VenueDTO, 'id' | 'name' | 'address'>;
+  user: UserDTO;
+  contactEmail: string;
+  contactPhone: string | null;
+  role: string;
+  message: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  verification: 'email_domain' | 'manual';
+  reviewNote: string | null;
+  createdAt: string;
+}
+
+export interface VenueInsightsDTO {
+  upcoming: { crawlId: string; startAt: string; timezone: string; going: number; visibility: 'public' | 'private'; plannedArrival: string | null }[];
+  next14Days: { crawls: number; people: number };
+  checkInsLast30Days: number;
+  specialsConfirmations: number;
+}
+
+export interface ProfileDTO {
+  user: UserDTO;
+  followers: number;
+  following: number;
+  isFollowing: boolean;
+  isMe: boolean;
+  /** Public crawls they organize or are going to — hidden when they opt out of sharing activity. */
+  upcoming: CrawlSummaryDTO[];
+  activityHidden: boolean;
+  crawlsTogether: number;
+}
+
+export interface FriendActivityDTO {
+  crawl: CrawlSummaryDTO;
+  friends: UserDTO[];
 }

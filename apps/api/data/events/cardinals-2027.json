@@ -1,0 +1,574 @@
+{
+ "source": "https://statsapi.mlb.com",
+ "fetchedAt": "2026-11-09T19:53:30.709Z",
+ "season": 2027,
+ "games": [
+  {
+   "id": "mlb-852501",
+   "startsAt": "2027-04-01T20:15:00Z",
+   "opponent": "Kansas City Royals",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852507",
+   "startsAt": "2027-04-03T18:15:00Z",
+   "opponent": "Kansas City Royals",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852504",
+   "startsAt": "2027-04-04T18:15:00Z",
+   "opponent": "Kansas City Royals",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852499",
+   "startsAt": "2027-04-05T23:45:00Z",
+   "opponent": "San Diego Padres",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852496",
+   "startsAt": "2027-04-06T23:45:00Z",
+   "opponent": "San Diego Padres",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852506",
+   "startsAt": "2027-04-07T17:15:00Z",
+   "opponent": "San Diego Padres",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852500",
+   "startsAt": "2027-04-19T23:45:00Z",
+   "opponent": "Minnesota Twins",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852503",
+   "startsAt": "2027-04-20T23:45:00Z",
+   "opponent": "Minnesota Twins",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852508",
+   "startsAt": "2027-04-21T17:15:00Z",
+   "opponent": "Minnesota Twins",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852497",
+   "startsAt": "2027-04-24T00:15:00Z",
+   "opponent": "Toronto Blue Jays",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852482",
+   "startsAt": "2027-04-24T20:15:00Z",
+   "opponent": "Toronto Blue Jays",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852494",
+   "startsAt": "2027-04-25T18:15:00Z",
+   "opponent": "Toronto Blue Jays",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852491",
+   "startsAt": "2027-04-26T23:45:00Z",
+   "opponent": "Atlanta Braves",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852493",
+   "startsAt": "2027-04-27T23:45:00Z",
+   "opponent": "Atlanta Braves",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852489",
+   "startsAt": "2027-04-28T17:15:00Z",
+   "opponent": "Atlanta Braves",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852488",
+   "startsAt": "2027-05-06T23:45:00Z",
+   "opponent": "Milwaukee Brewers",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852484",
+   "startsAt": "2027-05-08T00:15:00Z",
+   "opponent": "Milwaukee Brewers",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852483",
+   "startsAt": "2027-05-08T18:15:00Z",
+   "opponent": "Milwaukee Brewers",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852485",
+   "startsAt": "2027-05-09T18:15:00Z",
+   "opponent": "Milwaukee Brewers",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852490",
+   "startsAt": "2027-05-11T23:45:00Z",
+   "opponent": "Athletics",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852492",
+   "startsAt": "2027-05-12T23:45:00Z",
+   "opponent": "Athletics",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852486",
+   "startsAt": "2027-05-13T17:15:00Z",
+   "opponent": "Athletics",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852487",
+   "startsAt": "2027-05-22T00:15:00Z",
+   "opponent": "Detroit Tigers",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852476",
+   "startsAt": "2027-05-22T08:33:00Z",
+   "opponent": "Detroit Tigers",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852470",
+   "startsAt": "2027-05-23T18:15:00Z",
+   "opponent": "Detroit Tigers",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852477",
+   "startsAt": "2027-05-29T00:15:00Z",
+   "opponent": "Chicago Cubs",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852474",
+   "startsAt": "2027-05-29T08:33:00Z",
+   "opponent": "Chicago Cubs",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852473",
+   "startsAt": "2027-05-30T18:15:00Z",
+   "opponent": "Chicago Cubs",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852480",
+   "startsAt": "2027-05-31T18:15:00Z",
+   "opponent": "Pittsburgh Pirates",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852475",
+   "startsAt": "2027-06-01T23:45:00Z",
+   "opponent": "Pittsburgh Pirates",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852469",
+   "startsAt": "2027-06-02T18:15:00Z",
+   "opponent": "Pittsburgh Pirates",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852472",
+   "startsAt": "2027-06-14T23:45:00Z",
+   "opponent": "Washington Nationals",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852471",
+   "startsAt": "2027-06-15T23:45:00Z",
+   "opponent": "Washington Nationals",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852478",
+   "startsAt": "2027-06-16T23:45:00Z",
+   "opponent": "Washington Nationals",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852479",
+   "startsAt": "2027-06-17T21:15:00Z",
+   "opponent": "Washington Nationals",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852481",
+   "startsAt": "2027-06-19T00:15:00Z",
+   "opponent": "Cincinnati Reds",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852465",
+   "startsAt": "2027-06-19T08:33:00Z",
+   "opponent": "Cincinnati Reds",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852464",
+   "startsAt": "2027-06-20T18:15:00Z",
+   "opponent": "Cincinnati Reds",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852456",
+   "startsAt": "2027-06-26T00:15:00Z",
+   "opponent": "New York Mets",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852460",
+   "startsAt": "2027-06-26T08:33:00Z",
+   "opponent": "New York Mets",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852461",
+   "startsAt": "2027-06-27T18:15:00Z",
+   "opponent": "New York Mets",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852455",
+   "startsAt": "2027-07-06T23:45:00Z",
+   "opponent": "Arizona Diamondbacks",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852463",
+   "startsAt": "2027-07-07T23:45:00Z",
+   "opponent": "Arizona Diamondbacks",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852462",
+   "startsAt": "2027-07-08T23:45:00Z",
+   "opponent": "Arizona Diamondbacks",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852458",
+   "startsAt": "2027-07-10T00:15:00Z",
+   "opponent": "New York Yankees",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852466",
+   "startsAt": "2027-07-10T08:33:00Z",
+   "opponent": "New York Yankees",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852467",
+   "startsAt": "2027-07-11T18:15:00Z",
+   "opponent": "New York Yankees",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852459",
+   "startsAt": "2027-07-24T00:15:00Z",
+   "opponent": "Los Angeles Dodgers",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852457",
+   "startsAt": "2027-07-24T23:15:00Z",
+   "opponent": "Los Angeles Dodgers",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852468",
+   "startsAt": "2027-07-25T18:15:00Z",
+   "opponent": "Los Angeles Dodgers",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852451",
+   "startsAt": "2027-07-26T23:45:00Z",
+   "opponent": "Cincinnati Reds",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852441",
+   "startsAt": "2027-07-27T23:45:00Z",
+   "opponent": "Cincinnati Reds",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852442",
+   "startsAt": "2027-07-28T23:45:00Z",
+   "opponent": "Cincinnati Reds",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852446",
+   "startsAt": "2027-07-29T18:15:00Z",
+   "opponent": "Cincinnati Reds",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852453",
+   "startsAt": "2027-08-07T00:15:00Z",
+   "opponent": "Colorado Rockies",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852450",
+   "startsAt": "2027-08-07T23:15:00Z",
+   "opponent": "Colorado Rockies",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852449",
+   "startsAt": "2027-08-08T18:15:00Z",
+   "opponent": "Colorado Rockies",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852452",
+   "startsAt": "2027-08-09T23:45:00Z",
+   "opponent": "Chicago Cubs",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852445",
+   "startsAt": "2027-08-10T23:45:00Z",
+   "opponent": "Chicago Cubs",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852447",
+   "startsAt": "2027-08-11T18:15:00Z",
+   "opponent": "Chicago Cubs",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852444",
+   "startsAt": "2027-08-21T00:15:00Z",
+   "opponent": "Los Angeles Angels",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852443",
+   "startsAt": "2027-08-21T23:15:00Z",
+   "opponent": "Los Angeles Angels",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852448",
+   "startsAt": "2027-08-22T18:15:00Z",
+   "opponent": "Los Angeles Angels",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852454",
+   "startsAt": "2027-08-23T23:45:00Z",
+   "opponent": "Miami Marlins",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852430",
+   "startsAt": "2027-08-24T23:45:00Z",
+   "opponent": "Miami Marlins",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852428",
+   "startsAt": "2027-08-25T23:45:00Z",
+   "opponent": "Miami Marlins",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852429",
+   "startsAt": "2027-09-04T00:15:00Z",
+   "opponent": "San Francisco Giants",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852431",
+   "startsAt": "2027-09-04T23:15:00Z",
+   "opponent": "San Francisco Giants",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852436",
+   "startsAt": "2027-09-05T18:15:00Z",
+   "opponent": "San Francisco Giants",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852438",
+   "startsAt": "2027-09-06T18:15:00Z",
+   "opponent": "Houston Astros",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852439",
+   "startsAt": "2027-09-07T23:45:00Z",
+   "opponent": "Houston Astros",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852435",
+   "startsAt": "2027-09-08T17:15:00Z",
+   "opponent": "Houston Astros",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852440",
+   "startsAt": "2027-09-11T00:15:00Z",
+   "opponent": "Philadelphia Phillies",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852434",
+   "startsAt": "2027-09-11T23:15:00Z",
+   "opponent": "Philadelphia Phillies",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852427",
+   "startsAt": "2027-09-12T18:15:00Z",
+   "opponent": "Philadelphia Phillies",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852432",
+   "startsAt": "2027-09-20T23:45:00Z",
+   "opponent": "Milwaukee Brewers",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852433",
+   "startsAt": "2027-09-21T23:45:00Z",
+   "opponent": "Milwaukee Brewers",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852437",
+   "startsAt": "2027-09-22T17:15:00Z",
+   "opponent": "Milwaukee Brewers",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  },
+  {
+   "id": "mlb-852420",
+   "startsAt": "2027-09-25T00:15:00Z",
+   "opponent": "Pittsburgh Pirates",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852413",
+   "startsAt": "2027-09-25T23:15:00Z",
+   "opponent": "Pittsburgh Pirates",
+   "venue": "Busch Stadium",
+   "dayNight": "night"
+  },
+  {
+   "id": "mlb-852419",
+   "startsAt": "2027-09-26T18:15:00Z",
+   "opponent": "Pittsburgh Pirates",
+   "venue": "Busch Stadium",
+   "dayNight": "day"
+  }
+ ]
+}

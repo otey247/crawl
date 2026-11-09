@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Clock, MapPin, Plus, ThumbsUp } from 'lucide-react';
+import { BadgeCheck, Clock, MapPin, Plus, ThumbsUp } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { SpecialDTO, VenueDTO } from '@crawl/core';
 import { PhotoCredit, SourceLabel, VenueImage } from '../components/domain';
 import { Button, Field, Sheet, Spinner, errorMessage, inputCls, useToast } from '../components/ui';
 import { api, type SpecialInput } from '../lib/api';
+import { ClaimVenueSheet } from './ClaimVenue';
 import { useAuth } from '../lib/auth';
 import { priceLabel } from '../lib/format';
 
@@ -16,6 +17,7 @@ export function VenueSheet({ venueId, onClose, actions }: { venueId: string | nu
   const qc = useQueryClient();
   const toast = useToast();
   const [adding, setAdding] = useState(false);
+  const [claiming, setClaiming] = useState(false);
   const confirm = useMutation({
     mutationFn: api.confirmSpecial,
     onSuccess: () => {
@@ -43,6 +45,11 @@ export function VenueSheet({ venueId, onClose, actions }: { venueId: string | nu
             </p>
           ) : null}
           <div className="mt-4 space-y-2 text-[15px]">
+            {v.verified ? (
+              <p className="flex items-center gap-2 font-semibold">
+                <BadgeCheck className="size-4 shrink-0 text-amber" /> Managed by the venue
+              </p>
+            ) : null}
             {v.address ? (
               <p className="flex items-center gap-2 text-dim">
                 <MapPin className="size-4 shrink-0" /> {v.address}
@@ -95,6 +102,16 @@ export function VenueSheet({ venueId, onClose, actions }: { venueId: string | nu
           <div className="mt-6 flex gap-2">
             {actions ? actions(v) : <Button className="flex-1" onClick={() => nav(`/crawls/new?venue=${v.id}`)}>Start a crawl here</Button>}
           </div>
+          {me?.managedVenueIds.includes(v.id) ? (
+            <button className="mt-4 w-full text-center text-[14px] font-semibold text-amber" onClick={() => nav(`/venues/${v.id}/manage`)}>
+              Manage this bar
+            </button>
+          ) : me && !v.verified ? (
+            <button className="mt-4 w-full text-center text-[14px] text-dim hover:text-fg" onClick={() => setClaiming(true)}>
+              Own or manage {v.name}? Claim this listing
+            </button>
+          ) : null}
+          {claiming ? <ClaimVenueSheet venue={v} open onClose={() => setClaiming(false)} /> : null}
         </div>
       )}
     </Sheet>

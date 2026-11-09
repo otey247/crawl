@@ -20,6 +20,14 @@ Plan a pub crawl on open-source maps, invite your crew, and run it live. It laun
   - **Photographer:** picks the album's best shots. The picks show first in the gallery and feed the recap.
 - **Catch up to the group.** Anyone not with the group sees where it is, how far away it is and walking directions. **On my way** posts to chat and alerts the organizer and co-hosts. If the group moves on, they're redirected to the next stop. Arrival is confirmed in chat when they check in, or when their shared location reaches the bar.
 - **Post-crawl recap.** Shows the route walked, the bars, distance, time out, specials caught, check-ins, the best photos and the crew. A shareable 4:5 card includes the route sketch and the numbers but no one's photos or names.
+- **Ready-made crawls.** Four curated Soulard templates (Classic Soulard, Live Music Night, Patio Hop, Biergarten to Broadway), plus any crawl an organizer saves as a template, public or just for themselves. Using one creates your own draft with the same bars and stay lengths, minus any that have since closed.
+- **St. Louis event modes.** Each event shows a banner on the crawl with what to know, and the optimizer pads walking times for the crowds:
+  - **Soulard Mardi Gras Grand Parade** (Feb 6, 2027, from Mardi Gras Inc.): entry points and rideshare drop-offs; walking times padded 60%.
+  - **St. Patrick's Day.**
+  - **All 81 Cardinals home games for 2027**, from the MLB schedule.
+- **Weather.** An hourly National Weather Service forecast for the crawl window, with patio and beer-garden stops flagged when you'd arrive in a rainy hour. The optimizer schedules those stops in drier hours and says so in its explanation. The one-hour reminder includes rain and cold warnings.
+- **Venue portal.** Bar owners and managers claim their listing. An email on the bar's own website domain verifies instantly with a code; anything else goes to an admin review queue. Verified venues post specials marked "From the venue", replace their listing photo with their own, remove wrong crowd reports, and see how many crawls and people are heading their way (counts and times only, never names).
+- **Friends.** Follow people you've crawled with and see the public crawls they're going to under **Friends are going** on Explore. You can set your activity to No one, and private crawls are never shown.
 
 | Explore | Live crawl | Safety | Offline |
 | --- | --- | --- | --- |
@@ -28,6 +36,10 @@ Plan a pub crawl on open-source maps, invite your crew, and run it live. It laun
 | Ride board | Catch up | Photographer's picks | Recap |
 | --- | --- | --- | --- |
 | ![Ride board](docs/screens/ride-board.png) | ![Catch up](docs/screens/catch-up.png) | ![Picks](docs/screens/photographer-picks.png) | ![Recap](docs/screens/recap.png) |
+
+| Template | Mardi Gras mode | Weather | Venue portal |
+| --- | --- | --- | --- |
+| ![Template](docs/screens/template.png) | ![Event](docs/screens/event-mode.png) | ![Weather](docs/screens/weather.png) | ![Venue portal](docs/screens/venue-portal.png) |
 
 Invite links preview with a generated share card:
 
@@ -82,6 +94,7 @@ apps/web        React + Vite + MapLibre GL PWA (mobile-first)
 | `npm run build` | Production builds |
 | `npm run db:seed` | **Resets** dev data |
 | `npm run venues:import -- soulard` | Refresh a neighborhood from OpenStreetMap (set `OVERPASS_URL` to your own instance) |
+| `npx tsx apps/api/src/scripts/import-cardinals.ts 2028` | Pull a season's Cardinals home games from the MLB Stats API into `data/events/` |
 
 ## Configuration
 

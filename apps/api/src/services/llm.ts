@@ -82,6 +82,10 @@ export interface ExplainInput {
   baseline: { totalWalkMin: number; caughtCount: number } | null;
   caughtCount: number;
   violations: number;
+  /** St. Louis event crowds that padded walking times. */
+  crowd?: { factor: number; event: string } | null;
+  /** Rain risk the solver planned around for patio stops. */
+  rain?: { outdoorStops: string[]; maxChance: number; wetFrom: string | null } | null;
 }
 
 const ExplainSchema = z.object({ explanation: z.string().describe('2–3 plain sentences, no lists, no markdown') });
@@ -115,5 +119,10 @@ export function templateExplanation(input: ExplainInput): string {
     else if (extra > 0) parts.push(`It catches ${extra} more special${extra > 1 ? 's' : ''} than your order for ${-saved} extra min on foot.`);
   }
   if (input.violations) parts.push('Some legs exceed your walking limit; consider dropping a far stop.');
+  if (input.crowd) parts.push(`${input.crowd.event} crowds: walking times are padded ${Math.round((input.crowd.factor - 1) * 100)}%.`);
+  if (input.rain)
+    parts.push(
+      `Rain chances reach ${input.rain.maxChance}%${input.rain.wetFrom ? ` from about ${input.rain.wetFrom}` : ''}, so the order keeps patio stops (${input.rain.outdoorStops.join(', ')}) out of the wettest hours where it can.`,
+    );
   return parts.join(' ');
 }

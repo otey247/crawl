@@ -7,6 +7,7 @@ export default defineConfig({
       REDIS_URL: process.env.REDIS_URL ?? 'redis://localhost:6379/1',
       OSRM_URL: 'http://127.0.0.1:9', // force the offline estimate so tests are hermetic
       LLM_DISABLED: 'true',
+      WEATHER_DISABLED: 'true',
       JWT_SECRET: 'test-secret',
       NODE_ENV: 'test',
     },

@@ -10,6 +10,7 @@ import { DateTime } from 'luxon';
 import { CITIES } from '../cities/index.js';
 import { config } from '../config.js';
 import { approveRoute, createRouteJob, runRouteJob } from '../services/optimizer.js';
+import { syncCuratedEvents } from '../services/events.js';
 import { migrate } from './migrate.js';
 import { pool, query, one } from './pool.js';
 
@@ -62,7 +63,7 @@ const DEV_USERS = [
 async function main() {
   await migrate(() => {});
   console.log('Resetting data…');
-  await query(`truncate users, magic_links, cities, neighborhoods, venues, crawls, specials, routing_cache restart identity cascade`);
+  await query(`truncate users, magic_links, cities, neighborhoods, venues, crawls, specials, routing_cache, templates, events, weather_cache restart identity cascade`);
 
   for (const c of CITIES) {
     await query('insert into cities (id, name, timezone, center_lat, center_lng) values ($1,$2,$3,$4,$5)', [c.id, c.name, c.timezone, c.center.lat, c.center.lng]);
@@ -89,6 +90,10 @@ async function main() {
         credits[v.osm_id] ? JSON.stringify({ author: credits[v.osm_id].author, license: credits[v.osm_id].license, sourcePage: credits[v.osm_id].sourcePage }) : null,
       ],
     );
+    // Official websites (from venue research) — used to verify venue claims by email domain.
+    const site = credits[v.osm_id]?.sourcePage;
+    if (site && !site.includes('1860saloon.com/private') && !site.includes('budweisertours')) await query('update venues set website = $2 where id = $1', [row!.id, new URL(site).origin]);
+    if (v.name === "1860's" || v.name === 'Hardshell Cafe') await query('update venues set website = $2 where id = $1', [row!.id, 'https://1860saloon.com']);
     venueIds.set(cur.name ?? v.name, row!.id);
   }
   console.log(`Venues: ${venueIds.size} (Soulard, from OpenStreetMap)`);
@@ -237,6 +242,34 @@ async function main() {
   }
   await query(`update crawls set started_at = $2, ended_at = $3 where id = $1`, [past, lastWeek.toISO(), lastWeek.plus({ hours: 4 }).toISO()]);
 
+  // Curated templates (Explore → "Ready-made crawls").
+  const T: [string, string, string, [string, number][], string[]][] = [
+    ['classic-soulard', 'Classic Soulard', 'The neighborhood’s greatest hits: Irish pub garden, courtyard patio and two live-music saloons.', [["McGurk's Irish Pub", 50], ["Molly's in Soulard", 45], ['1860 Saloon', 45], ["Hammerstone's", 45], ['The Hi-Hat', 40]], ['Classic', 'Live music']],
+    ['live-music-night', 'Live Music Night', 'Bands most nights of the week, ending at the Irish pub.', [['1860 Saloon', 60], ["Hammerstone's", 50], ['Great Grizzly Bear', 50], ["McGurk's Irish Pub", 45]], ['Live music']],
+    ['patio-hop', 'Patio Hop', 'For warm evenings: garden, courtyard and sidewalk patios.', [["Molly's in Soulard", 50], ["McGurk's Irish Pub", 50], ['The Hi-Hat', 40], ['Eat Crow', 45]], ['Patio', 'Warm weather']],
+    ['biergarten-to-broadway', 'Biergarten to Broadway', 'Start under the oaks at the brewery and work east toward Broadway.', [['The Biergarten', 60], ["Big Daddy's", 45], ['Bastille', 40], ["Duke's", 45]], ['Brewery', 'Game day']],
+  ];
+  for (const [slug, title, description, stops, tags] of T) {
+    await query(`insert into templates (slug, title, description, neighborhood_id, curated, stops, tags) values ($1,$2,$3,'soulard',true,$4,$5)`, [
+      slug,
+      title,
+      description,
+      JSON.stringify(stops.map(([name, dwellMin]) => ({ venueId: venueIds.get(name), dwellMin }))),
+      tags,
+    ]);
+  }
+  const eventCount = await syncCuratedEvents();
+
+  // Alex is the dev admin (venue-claim review); a few follows so "Friends are going" has content.
+  await query('update users set is_admin = true where id = $1', [alex]);
+  const follow = (a: string, b: string) => query('insert into follows (follower_id, followee_id) values ($1,$2) on conflict do nothing', [a, b]);
+  await follow(alex, maya);
+  await follow(alex, users[8]); // Luis is going to Biergarten to Broadway
+  await follow(alex, users[9]);
+  await follow(maya, alex);
+  await follow(sam, alex);
+
+  console.log(`Templates: ${T.length} · events: ${eventCount}`);
   console.log('Seeded: 4 crawls, %d dev users. Default dev user: Alex Rivera', users.length);
 }
 

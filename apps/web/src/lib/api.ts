@@ -1,6 +1,8 @@
 import type {
   CrawlDetailDTO,
   CrawlSummaryDTO,
+  EventDTO,
+  FriendActivityDTO,
   InviteDTO,
   InvitePreviewDTO,
   LiveSpecialDTO,
@@ -12,13 +14,17 @@ import type {
   NotificationDTO,
   PhotoDTO,
   PreferenceTag,
+  ProfileDTO,
   RecapDTO,
   RideBoardDTO,
   RouteDTO,
   ScheduleFix,
   SpecialDTO,
+  TemplateDTO,
   UserDTO,
+  VenueClaimDTO,
   VenueDTO,
+  VenueInsightsDTO,
   VisitedHistoryDTO,
 } from '@crawl/core';
 
@@ -92,7 +98,7 @@ export const api = {
   magicLink: (email: string, displayName?: string) => post<{ sent: boolean; devLink?: string }>('/auth/magic-link', { email, displayName }),
   session: (body: { provider: 'magic_link'; token: string } | { provider: 'dev'; userId: string }) => post<{ token: string; user: MeDTO }>('/auth/session', body),
   me: () => get<MeDTO>('/me'),
-  updateMe: (displayName: string) => patch<MeDTO>('/me', { displayName }),
+  updateMe: (b: { displayName?: string; activityVisibility?: 'followers' | 'nobody' }) => patch<MeDTO>('/me', b),
   verifyAge: () => post<MeDTO>('/me/age-verification', { confirmedOfAge: true, minimumAge: 21 }),
 
   // venues
@@ -190,6 +196,30 @@ export const api = {
   cancelCatchUp: (id: string) => del<{ ok: true }>(`/crawls/${id}/catch-up`),
   recap: (id: string) => get<RecapDTO>(`/crawls/${id}/recap`),
   recapCardUrl: (id: string) => `${BASE}/v1/crawls/${id}/recap/card.png`,
+
+  // tier 3: templates, events, venue portal, friends
+  templates: (neighborhood?: string) => get<TemplateDTO[]>(`/templates${qs({ neighborhood })}`),
+  template: (id: string) => get<TemplateDTO>(`/templates/${id}`),
+  forkTemplate: (id: string, b: { title?: string; date: string; startTime: string; visibility: 'public' | 'private' }) => post<CrawlDetailDTO>(`/templates/${id}:fork`, b),
+  saveTemplate: (crawlId: string, b: { title: string; description?: string | null; visibility: 'public' | 'private'; tags?: string[] }) => post<TemplateDTO>(`/crawls/${crawlId}/template`, b),
+  events: (neighborhood?: string, days = 7) => get<EventDTO[]>(`/events${qs({ neighborhood, days })}`),
+  claimVenue: (venueId: string, b: { contactEmail: string; contactPhone?: string | null; role: string; message?: string | null }) =>
+    post<{ claimId: string; verification: 'email_domain' | 'manual'; devCode?: string; message: string }>(`/venues/${venueId}/claims`, b),
+  verifyClaim: (claimId: string, code: string) => post<{ ok: true; venueId: string }>(`/venue-claims/${claimId}:verify`, { code }),
+  myClaims: () => get<VenueClaimDTO[]>('/me/venue-claims'),
+  adminClaims: (status = 'pending') => get<VenueClaimDTO[]>(`/admin/venue-claims${qs({ status })}`),
+  approveClaim: (id: string, note?: string) => post<{ ok: true }>(`/admin/venue-claims/${id}:approve`, { note }),
+  rejectClaim: (id: string, note: string) => post<{ ok: true }>(`/admin/venue-claims/${id}:reject`, { note }),
+  myVenues: () => get<VenueDTO[]>('/me/venues'),
+  venueInsights: (id: string) => get<VenueInsightsDTO>(`/venues/${id}/insights`),
+  venuePhotoUploadUrl: (id: string, contentType: string) => post<{ key: string; uploadUrl: string }>(`/venues/${id}/photo:upload-url`, { contentType }),
+  venuePhotoComplete: (id: string, key: string) => post<VenueDTO>(`/venues/${id}/photo:complete`, { key }),
+  follow: (id: string) => post<{ ok: true; following: boolean }>(`/users/${id}/follow`),
+  unfollow: (id: string) => del<{ ok: true; following: boolean }>(`/users/${id}/follow`),
+  profile: (id: string) => get<ProfileDTO>(`/users/${id}`),
+  myFollows: () => get<{ following: UserDTO[]; followers: (UserDTO & { followingBack: boolean })[] }>('/me/follows'),
+  followSuggestions: () => get<(UserDTO & { crawlsTogether: number })[]>('/me/follow-suggestions'),
+  friendsCrawls: () => get<FriendActivityDTO[]>('/friends/crawls'),
 };
 
 /** Authenticated binary download (album zip). */

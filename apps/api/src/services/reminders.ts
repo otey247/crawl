@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import { one, query } from '../db/pool.js';
 import { notify } from './notify.js';
+import { hourlyForecast } from './weather.js';
 
 /**
  * Day-of nudges, each sent at most once per (crawl, user, kind):
@@ -22,9 +23,11 @@ export async function runReminders(): Promise<{ sent: number }> {
   let sent = 0;
 
   const upcoming = await query(
-    `select c.id, c.title, c.start_at, c.timezone,
-       (select coalesce(v.name_override, v.name) from crawl_stops s join venues v on v.id = s.venue_id where s.crawl_id = c.id order by s.position limit 1) as first_stop
-     from crawls c where c.status in ('planned', 'draft') and c.start_at > now() and c.start_at < now() + interval '24 hours'`,
+    `select c.id, c.title, c.start_at, c.timezone, fs.name as first_stop, fs.lat, fs.lng
+     from crawls c left join lateral (
+       select coalesce(v.name_override, v.name) as name, v.lat, v.lng from crawl_stops s join venues v on v.id = s.venue_id where s.crawl_id = c.id order by s.position limit 1
+     ) fs on true
+     where c.status in ('planned', 'draft') and c.start_at > now() and c.start_at < now() + interval '24 hours'`,
   );
   for (const c of upcoming) {
     const when = DateTime.fromISO(c.start_at, { zone: c.timezone });
@@ -47,10 +50,11 @@ export async function runReminders(): Promise<{ sent: number }> {
       const people = await query<{ user_id: string }>(`select user_id from memberships where crawl_id = $1 and rsvp in ('going', 'maybe')`, [c.id]);
       const to = await claim(c.id, people.map((m) => m.user_id), 'starts_soon');
       if (to.length) {
+        const weather = c.lat != null ? await weatherLine(c.lat, c.lng, Date.parse(c.start_at), c.timezone) : null;
         await notify(to, {
           kind: 'reminder.starts_soon',
           title: `${c.title} starts at ${when.toFormat('h:mm a')}`,
-          body: c.first_stop ? `First stop: ${c.first_stop}. Plan your ride home before you head out.` : 'Plan your ride home before you head out.',
+          body: [c.first_stop ? `First stop: ${c.first_stop}.` : null, weather, 'Plan your ride home before you head out.'].filter(Boolean).join(' '),
           crawlId: c.id,
           push: true,
         });
@@ -78,6 +82,17 @@ export async function runReminders(): Promise<{ sent: number }> {
     }
   }
   return { sent };
+}
+
+/** "Rain likely from 9 PM (60%)." / "Down to 38°F, bring a jacket." for the 1-hour reminder. */
+async function weatherLine(lat: number, lng: number, start: number, tz: string): Promise<string | null> {
+  const f = await hourlyForecast(lat, lng, { fresh: true }).catch(() => null);
+  const hours = f?.periods.filter((p) => Date.parse(p.start) + 3600_000 > start && Date.parse(p.start) < start + 5 * 3600_000) ?? [];
+  if (!hours.length) return null;
+  const wet = hours.find((p) => p.precipChance >= 50);
+  if (wet) return `Rain likely from ${DateTime.fromISO(wet.start, { zone: tz }).toFormat('h a')} (${wet.precipChance}%).`;
+  const low = Math.min(...hours.map((p) => p.temperatureF));
+  return low <= 40 ? `Down to ${low}°F tonight, bring a jacket.` : null;
 }
 
 export async function markHomeSafe(crawlId: string, userId: string): Promise<string> {

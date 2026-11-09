@@ -20,7 +20,9 @@ import { DEFAULT_NEIGHBORHOOD, findNeighborhood } from '../cities/index.js';
 import { one, query, type Queryable } from '../db/pool.js';
 import { forbidden, notFound } from '../lib/errors.js';
 import { hoursGuard } from './hours.js';
+import { eventsOverlapping } from './events.js';
 import { storage } from './storage.js';
+import { crawlWeather } from './weather.js';
 
 export const MIN_SPECIAL_CONFIDENCE = 0.4;
 
@@ -80,7 +82,7 @@ export async function specialsForVenues(venueIds: string[], crawlId: string | nu
 }
 
 const VENUE_COLS = `v.id, v.osm_id, coalesce(v.name_override, v.name) as name, v.lat, v.lng, v.address, v.category, v.price_level,
-  v.tags, v.opening_hours, v.image_url, v.image_credit, v.status, v.status_note, v.neighborhood_id`;
+  v.tags, v.opening_hours, v.image_url, v.image_credit, v.status, v.status_note, v.neighborhood_id, (v.claimed_by is not null) as verified`;
 
 export function venueDTO(r: any, specials: any[], tz: string, now = Date.now()): VenueDTO {
   return {
@@ -99,6 +101,7 @@ export function venueDTO(r: any, specials: any[], tz: string, now = Date.now()):
     imageCredit: r.image_credit ?? null,
     status: r.status ?? 'open',
     statusNote: r.status_note ?? null,
+    verified: !!r.verified,
     neighborhoodId: r.neighborhood_id,
     specials: specials.filter((s) => s.venue_id === r.id).map((s) => specialDTO(s, tz, now)),
     ...(r.distance_m != null ? { distanceM: r.distance_m } : {}),
@@ -399,6 +402,8 @@ export async function loadCrawlDetail(crawlId: string, viewerId: string | null, 
     live,
     permissions: permissionsFor(membership?.role),
     safety: (findNeighborhood(row.neighborhood_id) ?? findNeighborhood(DEFAULT_NEIGHBORHOOD))!.city.safety,
+    events: await eventsOverlapping(row.neighborhood_id, Date.parse(row.start_at), Date.parse(row.start_at) + (approvedRoute?.totalS ?? stops.reduce((t, s) => t + s.dwellMin * 60 + 600, 0)) * 1000),
+    weather: await crawlWeather(row, stops, approvedRoute?.totalS ?? null).catch(() => null),
     startedAt: row.started_at,
     endedAt: row.ended_at,
   };

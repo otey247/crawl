@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, Globe, Images, Lock, MapPin, Pencil, Play, Share2, Sparkles, Trash2, UserPlus } from 'lucide-react';
+import { CalendarDays, Globe, Images, Lock, MapPin, Pencil, Play, Copy, Share2, Sparkles, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { CrawlDetailDTO } from '@crawl/core';
 import { MapView } from '../components/MapView';
 import { Avatar, AvatarStack, Button, Empty, PageSpinner, Segmented, Sheet, TopBar, errorMessage, useToast } from '../components/ui';
 import { Chat } from '../features/Chat';
+import { EventBanner, WeatherCard } from '../features/Conditions';
+import { SaveTemplateSheet } from '../features/SaveTemplate';
 import { InvitePanel } from '../features/InvitePanel';
 import { Itinerary } from '../features/Itinerary';
 import { LiveCrawlView, type CrawlTab } from '../features/LiveCrawlView';
@@ -47,6 +49,7 @@ function CrawlOverview({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; tab: Craw
   const toast = useToast();
   const { me } = useAuth();
   const [inviting, setInviting] = useState(false);
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const set = (c: CrawlDetailDTO) => qc.setQueryData(['crawl', crawl.id], c);
   const onErr = (e: unknown) => toast({ title: errorMessage(e) });
   const join = useMutation({ mutationFn: () => api.join(crawl.id), onSuccess: (c) => (set(c), qc.invalidateQueries({ queryKey: ['my-invites'] }), toast({ title: 'You’re in', body: 'See you there.' })), onError: onErr });
@@ -107,6 +110,8 @@ function CrawlOverview({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; tab: Craw
 
         {/* Primary actions */}
         <div className="mt-5 space-y-3">
+          {!ended ? <EventBanner events={crawl.events} tz={crawl.timezone} /> : null}
+          {!ended ? <WeatherCard weather={crawl.weather} tz={crawl.timezone} /> : null}
           {ended && p.isMember ? <HomeSafeCard crawl={crawl} /> : null}
           {ended && p.isMember ? (
             <Link to={`/crawls/${crawl.id}/recap`} className="flex items-center gap-3 rounded-3xl bg-amber p-4 text-amber-ink">
@@ -199,8 +204,15 @@ function CrawlOverview({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; tab: Craw
           )}
         </div>
 
+        {p.canDelete && crawl.stops.length >= 2 ? (
+          <div className="mt-10 flex justify-center border-t border-line pt-6">
+            <button className="inline-flex items-center gap-1.5 text-[14px] text-dim hover:text-fg" onClick={() => setSavingTemplate(true)}>
+              <Copy className="size-4" /> Save as template
+            </button>
+          </div>
+        ) : null}
         {p.isMember && !ended ? (
-          <div className="mt-10 flex justify-center gap-6 border-t border-line pt-6">
+          <div className={`flex justify-center gap-6 ${p.canDelete && crawl.stops.length >= 2 ? 'mt-4' : 'mt-10 border-t border-line pt-6'}`}>
             {p.canDelete ? (
               <button className="inline-flex items-center gap-1.5 text-[14px] text-dim hover:text-fg" onClick={() => confirm('Delete this crawl for everyone?') && del.mutate()}>
                 <Trash2 className="size-4" /> Delete crawl
@@ -219,6 +231,7 @@ function CrawlOverview({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; tab: Craw
         ) : null}
       </div>
 
+      <SaveTemplateSheet crawl={crawl} open={savingTemplate} onClose={() => setSavingTemplate(false)} />
       <Sheet open={inviting} onClose={() => setInviting(false)} title="Invite people">
         <div className="pb-2">
           <InvitePanel crawl={crawl} />

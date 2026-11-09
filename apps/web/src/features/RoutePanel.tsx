@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { CrawlDetailDTO, PreferenceTag, RouteDTO } from '@crawl/core';
 import { Button, Chip, Spinner, errorMessage, useToast } from '../components/ui';
 import { api } from '../lib/api';
+import { EventBanner, WeatherCard } from './Conditions';
 import { fmtDistance, fmtDuration, fmtTime } from '../lib/format';
 
 const PREFS: { tag: PreferenceTag; label: string; icon: React.ReactNode }[] = [
@@ -58,6 +59,8 @@ export function RoutePanel({ crawl, onRouteChange }: { crawl: CrawlDetailDTO; on
 
   return (
     <div className="space-y-5">
+      <EventBanner events={crawl.events} tz={crawl.timezone} compact />
+      <WeatherCard weather={crawl.weather} tz={crawl.timezone} compact />
       <div>
         <p className="text-[13px] font-semibold uppercase tracking-wider text-dim">Optimize for</p>
         <div className="mt-2 flex flex-wrap gap-2">

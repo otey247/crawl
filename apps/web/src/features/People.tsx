@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Check, CircleHelp, House, MoreHorizontal, Navigation, X } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { CREW_ROLES, type CrawlDetailDTO, type CrewRole, type MemberDTO, type Rsvp } from '@crawl/core';
 import { CREW_META, CrewBadge, RoleBadge, RsvpStatus } from '../components/domain';
 import { Avatar, Button, Segmented, Sheet, errorMessage, useToast } from '../components/ui';
@@ -85,7 +86,7 @@ export function People({ crawl }: { crawl: CrawlDetailDTO }) {
             <Avatar user={m.user} size={44} />
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-2 truncate text-[16px] font-semibold">
-                {m.user.displayName}
+                {m.user.id === me?.id ? m.user.displayName : <Link to={`/u/${m.user.id}`} className="hover:underline">{m.user.displayName}</Link>}
                 {m.user.id === me?.id ? <span className="text-[13px] font-normal text-dim">(you)</span> : null}
               </p>
               <div className="mt-1 flex flex-wrap items-center gap-1.5">

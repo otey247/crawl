@@ -7,9 +7,20 @@ import { one, query } from '../db/pool.js';
 import { badRequest, forbidden, notFound, unauthorized } from '../lib/errors.js';
 import { sha256, token128 } from '../lib/ids.js';
 
-function meDTO(r: any): MeDTO {
-  return { id: r.id, displayName: r.display_name, avatarUrl: r.avatar_url, email: r.email, ageVerified: !!r.dob_verified_at };
+function meDTO(r: any, managedVenueIds: string[] = []): MeDTO {
+  return {
+    id: r.id,
+    displayName: r.display_name,
+    avatarUrl: r.avatar_url,
+    email: r.email,
+    ageVerified: !!r.dob_verified_at,
+    isAdmin: !!r.is_admin,
+    activityVisibility: r.activity_visibility ?? 'followers',
+    managedVenueIds,
+  };
 }
+
+const managed = async (uid: string) => (await query<{ id: string }>('select id from venues where claimed_by = $1', [uid])).map((r) => r.id);
 
 export async function authRoutes(app: FastifyInstance) {
   const issue = (u: any) => ({ token: app.jwt.sign({ sub: u.id, name: u.display_name }), user: meDTO(u) });
@@ -75,12 +86,19 @@ export async function authRoutes(app: FastifyInstance) {
   app.get('/me', { preHandler: app.authenticate }, async (req) => {
     const u = await one('select * from users where id = $1', [userId(req)]);
     if (!u) throw unauthorized();
-    return meDTO(u);
+    return meDTO(u, await managed(u.id));
   });
 
   app.patch('/me', { preHandler: app.authenticate }, async (req) => {
-    const body = z.object({ displayName: z.string().trim().min(1).max(60) }).parse(req.body);
-    return meDTO(await one('update users set display_name = $2 where id = $1 returning *', [userId(req), body.displayName]));
+    const body = z
+      .object({ displayName: z.string().trim().min(1).max(60).optional(), activityVisibility: z.enum(['followers', 'nobody']).optional() })
+      .parse(req.body);
+    const u = await one('update users set display_name = coalesce($2, display_name), activity_visibility = coalesce($3, activity_visibility) where id = $1 returning *', [
+      userId(req),
+      body.displayName ?? null,
+      body.activityVisibility ?? null,
+    ]);
+    return meDTO(u, await managed(u.id));
   });
 
   /** Records the 21+ confirmation (US launch). */
