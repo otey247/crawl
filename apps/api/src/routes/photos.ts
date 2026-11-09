@@ -8,7 +8,7 @@ import { badRequest, forbidden, notFound } from '../lib/errors.js';
 import { UUID_PARAM } from '../lib/ids.js';
 import { enqueuePhoto } from '../services/queue.js';
 import { emitToCrawl } from '../services/realtime.js';
-import { getCrawlRow, loadPhoto, photoDTO, requireRole } from '../services/repo.js';
+import { PHOTO_SELECT, getCrawlRow, loadPhoto, photoDTO, requireRole } from '../services/repo.js';
 import { storage } from '../services/storage.js';
 
 const uuid = z.string().uuid();
@@ -98,8 +98,7 @@ export async function photoRoutes(app: FastifyInstance) {
     const q = z.object({ cursor: z.string().datetime({ offset: true }).optional(), limit: z.coerce.number().int().min(1).max(100).default(60) }).parse(req.query);
     const host = m.role !== 'participant';
     const rows = await query(
-      `select p.*, u.display_name, u.avatar_url, (select count(*) from photo_reports pr where pr.photo_id = p.id) as report_count
-       from photos p join users u on u.id = p.uploader_id
+      `${PHOTO_SELECT}
        where p.crawl_id = $1 and (p.status = 'ready' or (p.status = 'hidden' and ($2 or p.uploader_id = $3)))
          and ($4::timestamptz is null or p.created_at < $4)
        order by p.created_at desc limit $5`,
@@ -107,6 +106,37 @@ export async function photoRoutes(app: FastifyInstance) {
     );
     const items = rows.map(photoDTO);
     return { items, nextCursor: rows.length === q.limit ? rows[rows.length - 1].created_at : null };
+  });
+
+  /** Photographer's picks: featured photos first, then everything the Photographer shot. */
+  app.get('/crawls/:id/photos/picks', { preHandler: app.authenticate }, async (req) => {
+    const { id } = z.object({ id: uuid }).parse(req.params);
+    await requireRole(id, userId(req), 'member');
+    const rows = await query(
+      `select * from (${PHOTO_SELECT} where p.crawl_id = $1 and p.status = 'ready') x
+       where x.featured_at is not null or x.by_photographer
+       order by x.featured_at desc nulls last, x.created_at desc limit 24`,
+      [id],
+    );
+    return rows.map(photoDTO);
+  });
+
+  /** The Photographer (or a host) features a photo for the album's picks and the recap. */
+  app.post('/crawls/:id/photos/:photoId/feature', { preHandler: app.authenticate }, async (req) => {
+    const { id, photoId } = z.object({ id: uuid, photoId: uuid }).parse(req.params);
+    const uid = userId(req);
+    const m = await requireRole(id, uid, 'member');
+    if (m.role === 'participant' && m.crew_role !== 'photographer') throw forbidden('Only the Photographer or a host can pick photos');
+    const { featured } = z.object({ featured: z.boolean() }).parse(req.body);
+    const r = await one(
+      `update photos set featured_at = case when $3 then coalesce(featured_at, now()) else null end, featured_by = case when $3 then $4::uuid else null end
+       where id = $1 and crawl_id = $2 and status = 'ready' returning id`,
+      [photoId, id, featured, uid],
+    );
+    if (!r) throw notFound('Photo not found');
+    const dto = (await loadPhoto(photoId))!;
+    emitToCrawl(id, 'photo.updated', dto);
+    return dto;
   });
 
   app.delete('/crawls/:id/photos/:photoId', { preHandler: app.authenticate }, async (req) => {

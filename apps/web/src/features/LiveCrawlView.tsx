@@ -13,6 +13,7 @@ import { useOfflineCrawl } from '../lib/offline';
 import { getSocket } from '../lib/socket';
 import { PushPrompt } from './PushPrompt';
 import { SafetyButton } from './Safety';
+import { CatchUpCard } from './CatchUp';
 import { Chat } from './Chat';
 import { Itinerary } from './Itinerary';
 import { People } from './People';
@@ -169,6 +170,7 @@ export function LiveCrawlView({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; ta
           ) : null}
         </div>
 
+        <CatchUpCard crawl={crawl} />
         <LiveAlerts alerts={rankAlerts(live?.specials ?? [], live?.atRisk ?? [], current?.id ?? null)} tz={crawl.timezone} applying={fix.isPending} onApply={(p) => fix.mutate(p)} />
 
         {/* Location + host tools */}

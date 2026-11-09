@@ -11,6 +11,8 @@ import { crawlRoutes } from './routes/crawls.js';
 import { liveRoutes } from './routes/live.js';
 import { ogRoutes } from './routes/og.js';
 import { photoRoutes } from './routes/photos.js';
+import { recapRoutes } from './routes/recap.js';
+import { rideRoutes } from './routes/rides.js';
 import { socialRoutes } from './routes/social.js';
 import { venueImageRoutes } from './routes/venueImages.js';
 import { venueRoutes } from './routes/venues.js';
@@ -50,6 +52,8 @@ export async function buildApp(opts: { logger?: boolean } = {}) {
       await v1.register(photoRoutes);
       await v1.register(socialRoutes);
       await v1.register(ogRoutes);
+      await v1.register(rideRoutes);
+      await v1.register(recapRoutes);
       await v1.register(venueImageRoutes);
     },
     { prefix: '/v1' },

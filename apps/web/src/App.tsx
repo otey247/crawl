@@ -18,6 +18,7 @@ import { Invites } from './pages/Invites';
 import { MyCrawls } from './pages/MyCrawls';
 import { PlanCrawl } from './pages/PlanCrawl';
 import { Profile } from './pages/Profile';
+import { Recap } from './pages/Recap';
 import { SignIn, VerifyMagicLink } from './pages/SignIn';
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -97,6 +98,7 @@ export function App() {
         <Route path="/profile" element={<RequireAuth><WithNav><Profile /></WithNav></RequireAuth>} />
         <Route path="/crawls/new" element={<RequireAuth><CreateCrawl /></RequireAuth>} />
         <Route path="/crawls/:id/plan" element={<RequireAuth><PlanCrawl /></RequireAuth>} />
+        <Route path="/crawls/:id/recap" element={<RequireAuth><Recap /></RequireAuth>} />
         <Route path="/crawls/:id" element={<CrawlPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

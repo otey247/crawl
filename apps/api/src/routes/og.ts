@@ -24,7 +24,7 @@ interface Preview {
   image: string;
 }
 
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+export const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 function page(p: Preview): string {
   const url = `${config.appUrl}${p.path}`;
@@ -71,7 +71,7 @@ async function crawlFacts(crawlId: string) {
   return { crawl, when, ...facts! };
 }
 
-function wrap(text: string, max: number, lines: number): string[] {
+export function wrap(text: string, max: number, lines: number): string[] {
   const out: string[] = [];
   let line = '';
   for (const word of text.split(/\s+/)) {

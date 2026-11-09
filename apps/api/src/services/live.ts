@@ -280,6 +280,56 @@ export async function syncLeader(crawlId: string): Promise<void> {
   emitToCrawl(crawlId, 'crawl.updated', { crawlId });
 }
 
+const CAUGHT_UP_RADIUS_M = 60;
+
+/** "On my way": a member walking to meet the group. Returns the target stop and a walking estimate. */
+export async function startCatchUp(crawlId: string, userId: string, pos?: LatLng | null) {
+  const crawl = await getCrawlRow(crawlId);
+  if (crawl.status !== 'live') throw badRequest('The crawl isn’t live');
+  const live = await getLive(crawlId);
+  const target = await one(
+    `select s.id, coalesce(v.name_override, v.name) as name, v.lat, v.lng from crawl_stops s join venues v on v.id = s.venue_id
+     where s.crawl_id = $1 and (s.id = $2 or ($2::uuid is null and s.arrived_at is null and not s.skipped)) order by s.position limit 1`,
+    [crawlId, live?.current_stop_id ?? null],
+  );
+  if (!target) throw badRequest('The group has no stop left to meet at');
+  const walkMin = pos ? Math.max(1, Math.round(estimateWalk(pos, target).walkS / 60)) : null;
+  await query(`update memberships set catching_up_since = now(), catching_up_stop_id = $3 where crawl_id = $1 and user_id = $2`, [crawlId, userId, target.id]);
+  const u = await one('select display_name from users where id = $1', [userId]);
+  await systemMessage(crawlId, `${u!.display_name} is on the way to ${target.name}${walkMin ? ` (about ${walkMin} min)` : ''}.`);
+  await notify((await crawlMemberIds(crawlId, { hostsOnly: true })).filter((id) => id !== userId), {
+    kind: 'catchup.started',
+    title: `${u!.display_name} is catching up`,
+    body: `Heading to ${target.name}${walkMin ? `, about ${walkMin} min away` : ''}.`,
+    crawlId,
+    push: true,
+  });
+  emitToCrawl(crawlId, 'crawl.updated', { crawlId });
+  return { stopId: target.id as string, stopName: target.name as string, walkMin };
+}
+
+export async function cancelCatchUp(crawlId: string, userId: string) {
+  await query(`update memberships set catching_up_since = null, catching_up_stop_id = null where crawl_id = $1 and user_id = $2`, [crawlId, userId]);
+  emitToCrawl(crawlId, 'crawl.updated', { crawlId });
+}
+
+/** Called on check-in or when a sharing member's position reaches the group's stop. */
+export async function caughtUp(crawlId: string, userId: string, stopId: string) {
+  const cleared = await one(
+    `update memberships set catching_up_since = null, catching_up_stop_id = null
+     where crawl_id = $1 and user_id = $2 and catching_up_since is not null returning user_id`,
+    [crawlId, userId],
+  );
+  if (!cleared) return false;
+  const [u, v] = await Promise.all([
+    one('select display_name from users where id = $1', [userId]),
+    one(`select coalesce(v.name_override, v.name) as name from crawl_stops s join venues v on v.id = s.venue_id where s.id = $1`, [stopId]),
+  ]);
+  await systemMessage(crawlId, `${u!.display_name} caught up with the group at ${v!.name}.`);
+  emitToCrawl(crawlId, 'crawl.updated', { crawlId });
+  return true;
+}
+
 export async function startCrawl(crawlId: string, userId: string): Promise<void> {
   const crawl = await getCrawlRow(crawlId);
   if (crawl.status === 'live') return;
@@ -314,7 +364,7 @@ export async function endCrawl(crawlId: string): Promise<void> {
     await db.query(`update crawls set status = 'ended', ended_at = now(), updated_at = now() where id = $1`, [crawlId]);
     await db.query(`update live_state set simulating = false, current_stop_id = null where crawl_id = $1`, [crawlId]);
     // Individual location sharing switches off automatically when the crawl ends.
-    await db.query(`update memberships set location_sharing = false where crawl_id = $1`, [crawlId]);
+    await db.query(`update memberships set location_sharing = false, catching_up_since = null, catching_up_stop_id = null where crawl_id = $1`, [crawlId]);
   });
   const photoCount = Number((await one(`select count(*) as n from photos where crawl_id = $1 and status = 'ready'`, [crawlId]))!.n);
   const endedAt = new Date().toISOString();
@@ -323,8 +373,9 @@ export async function endCrawl(crawlId: string): Promise<void> {
   await notify(await crawlMemberIds(crawlId, { excludeDeclined: true }), {
     kind: 'crawl.ended',
     title: `${crawl.title} has ended`,
-    body: `${photoCount} photo${photoCount === 1 ? '' : 's'} in the album. Your visited bars are in your profile.`,
+    body: `Your recap is ready: the route, the bars, ${photoCount} photo${photoCount === 1 ? '' : 's'}.`,
     crawlId,
+    url: `/crawls/${crawlId}/recap`,
     push: true,
   });
 }
@@ -366,9 +417,18 @@ export async function markDeparted(crawlId: string, at = new Date()): Promise<vo
   const next = dto.schedule.find((s) => s.phase === 'next');
   emitToCrawl(crawlId, 'stop.departed', { stopId, departedAt: at.toISOString(), nextStopId: next?.stopId ?? null, eta: next?.eta ?? null });
   if (next) {
+    // Anyone still walking to the stop the group just left is redirected to the next one.
+    const redirected = await query<{ user_id: string }>(
+      `update memberships set catching_up_stop_id = $3 where crawl_id = $1 and catching_up_stop_id = $2 and catching_up_since is not null returning user_id`,
+      [crawlId, stopId, next.stopId],
+    );
     const crawl = await getCrawlRow(crawlId);
     const v = await one(`select coalesce(v.name_override, v.name) as name from crawl_stops s join venues v on v.id = s.venue_id where s.id = $1`, [next.stopId]);
     const eta = next.eta ? DateTime.fromISO(next.eta, { zone: crawl.timezone }).toFormat('h:mm a') : null;
+    await notify(
+      redirected.map((r) => r.user_id),
+      { kind: 'catchup.redirect', title: `The group moved on to ${v!.name}`, body: 'Head there instead. Tap for walking directions.', crawlId, push: true },
+    );
     await notify(await crawlMemberIds(crawlId, { excludeDeclined: true }), {
       kind: 'group.leaving',
       title: `Group’s heading to ${v!.name}`,
@@ -388,6 +448,12 @@ export async function handlePosition(crawlId: string, userId: string, pos: LatLn
   if (live.leader_user_id !== userId && !opts.force) {
     // Opted-in individual sharing is logged but does not move "the group".
     await query('insert into position_log (crawl_id, user_id, lat, lng, accuracy_m, at) values ($1,$2,$3,$4,$5,$6)', [crawlId, userId, pos.lat, pos.lng, pos.accuracyM ?? null, at]);
+    const catching = await one(
+      `select m.catching_up_stop_id as stop_id, v.lat, v.lng from memberships m join crawl_stops s on s.id = m.catching_up_stop_id join venues v on v.id = s.venue_id
+       where m.crawl_id = $1 and m.user_id = $2 and m.catching_up_since is not null`,
+      [crawlId, userId],
+    );
+    if (catching && haversineM(pos, catching) <= CAUGHT_UP_RADIUS_M) await caughtUp(crawlId, userId, catching.stop_id);
     return;
   }
   await query('insert into position_log (crawl_id, user_id, lat, lng, accuracy_m, at) values ($1,$2,$3,$4,$5,$6)', [crawlId, userId, pos.lat, pos.lng, pos.accuracyM ?? null, at]);

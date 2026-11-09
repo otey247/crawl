@@ -89,6 +89,13 @@ export function useCrawlChannel(crawlId: string | undefined, enabled: boolean) {
         });
         refetchCrawl();
       },
+      'photo.updated': (p) => {
+        qc.setQueryData<{ pages: { items: any[]; nextCursor: string | null }[]; pageParams: unknown[] }>(['photos', crawlId], (old) =>
+          old ? { ...old, pages: old.pages.map((pg) => ({ ...pg, items: pg.items.map((x) => (x.id === p.id ? p : x)) })) } : old,
+        );
+        qc.invalidateQueries({ queryKey: ['photo-picks', crawlId] });
+      },
+      'rides.updated': () => qc.invalidateQueries({ queryKey: ['rides', crawlId] }),
       'photo.removed': ({ photoId }) => {
         qc.setQueryData<{ pages: { items: any[]; nextCursor: string | null }[]; pageParams: unknown[] }>(['photos', crawlId], (old) =>
           old ? { ...old, pages: old.pages.map((pg) => ({ ...pg, items: pg.items.filter((x) => x.id !== photoId) })) } : old,

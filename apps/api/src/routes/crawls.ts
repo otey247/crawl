@@ -447,8 +447,9 @@ export async function crawlRoutes(app: FastifyInstance) {
     const m = await getMembership(id, target);
     if (!m) throw notFound('Member not found');
     if (m.role === 'organizer' && body.role) throw badRequest("The organizer's role can't be changed");
-    // One Designated Driver / Navigator / Photographer per crawl keeps the badges meaningful.
-    if (body.crewRole) await query('update memberships set crew_role = null where crawl_id = $1 and crew_role = $2 and user_id <> $3', [id, body.crewRole, target]);
+    // One Navigator (they lead the group's location) and one Photographer per crawl; any number of
+    // Designated Drivers, since big groups need more than one car.
+    if (body.crewRole && body.crewRole !== 'designated_driver') await query('update memberships set crew_role = null where crawl_id = $1 and crew_role = $2 and user_id <> $3', [id, body.crewRole, target]);
     await query(
       `update memberships set role = coalesce($3, role), crew_role = case when $4::boolean then $5 else crew_role end where crawl_id = $1 and user_id = $2`,
       [id, target, body.role ?? null, body.crewRole !== undefined, body.crewRole ?? null],

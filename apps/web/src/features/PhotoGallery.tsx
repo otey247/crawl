@@ -1,5 +1,5 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Download, EyeOff, Flag, ImagePlus, Images, RotateCw, Trash2, X } from 'lucide-react';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight, Download, EyeOff, Flag, ImagePlus, Images, RotateCw, Star, Trash2, X } from 'lucide-react';
 import { DateTime } from 'luxon';
 import { useEffect, useRef, useState } from 'react';
 import type { CrawlDetailDTO, PhotoDTO } from '@crawl/core';
@@ -16,7 +16,10 @@ export function PhotoGallery({ crawl }: { crawl: CrawlDetailDTO }) {
   const input = useRef<HTMLInputElement>(null);
   const uploader = usePhotoUploader(crawl.id);
   const [grouping, setGrouping] = useState<'recent' | 'stop'>('recent');
-  const [viewer, setViewer] = useState<number | null>(null);
+  // The viewer swipes through whichever list it was opened from (picks strip or the album).
+  const [viewer, setViewer] = useState<{ list: 'picks' | 'album'; index: number } | null>(null);
+  const picks = useQuery({ queryKey: ['photo-picks', crawl.id], queryFn: () => api.photoPicks(crawl.id), enabled: crawl.permissions.isMember });
+  const canPick = crawl.permissions.canModeratePhotos || crawl.myMembership?.crewRole === 'photographer';
   const [dragging, setDragging] = useState(false);
 
   const photos = useInfiniteQuery({
@@ -110,6 +113,22 @@ export function PhotoGallery({ crawl }: { crawl: CrawlDetailDTO }) {
         </div>
       ) : null}
 
+      {picks.data?.length ? (
+        <section className="mt-5" aria-label="Photographer's picks">
+          <h3 className="mb-2 flex items-center gap-1.5 text-[15px] font-semibold">
+            <Star className="size-4 fill-amber text-amber" /> Photographer’s picks
+          </h3>
+          <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
+            {picks.data.map((p, i) => (
+              <button key={p.id} onClick={() => setViewer({ list: 'picks', index: i })} className="relative size-28 shrink-0 overflow-hidden rounded-2xl bg-raised" aria-label={`Pick by ${p.uploader.displayName}`}>
+                <img src={p.thumbUrl} alt="" loading="lazy" className="size-full object-cover" />
+                {p.featured ? <Star className="absolute right-1.5 top-1.5 size-4 fill-amber text-amber drop-shadow" /> : null}
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {all.length ? (
         <div className="mt-5">
           <Segmented size="sm" value={grouping} onChange={setGrouping} options={[{ value: 'recent', label: 'Newest' }, { value: 'stop', label: 'By bar' }]} />
@@ -128,7 +147,8 @@ export function PhotoGallery({ crawl }: { crawl: CrawlDetailDTO }) {
             {g.title ? <h3 className="mb-2 text-[15px] font-semibold">{g.title}</h3> : null}
             <div className="columns-2 gap-2 [column-fill:_balance]">
               {g.items.map((p) => (
-                <button key={p.id} className="relative mb-2 block w-full overflow-hidden rounded-2xl bg-raised" onClick={() => setViewer(flat.indexOf(p))} aria-label={`Photo by ${p.uploader.displayName}`}>
+                <button key={p.id} className="relative mb-2 block w-full overflow-hidden rounded-2xl bg-raised" onClick={() => setViewer({ list: 'album', index: flat.indexOf(p) })} aria-label={`Photo by ${p.uploader.displayName}`}>
+                  {p.featured ? <Star className="absolute right-2 top-2 z-10 size-4 fill-amber text-amber drop-shadow" aria-label="Photographer's pick" /> : null}
                   <img src={p.thumbUrl} alt="" loading="lazy" className="block w-full" style={p.width && p.height ? { aspectRatio: `${p.width}/${p.height}` } : undefined} />
                   {p.status === 'hidden' ? (
                     <span className="absolute inset-0 flex items-center justify-center bg-black/70 text-[13px] font-semibold">
@@ -147,16 +167,20 @@ export function PhotoGallery({ crawl }: { crawl: CrawlDetailDTO }) {
         </Button>
       ) : null}
 
-      {viewer !== null && flat[viewer] ? (
+      {viewer !== null && (viewer.list === 'picks' ? picks.data ?? [] : flat)[viewer.index] ? (
         <Viewer
-          photos={flat}
-          index={viewer}
-          onIndex={setViewer}
+          photos={viewer.list === 'picks' ? picks.data ?? [] : flat}
+          index={viewer.index}
+          onIndex={(index) => setViewer({ ...viewer, index })}
+          canPick={canPick}
           onClose={() => setViewer(null)}
           crawl={crawl}
           meId={me?.id}
           stopName={stopName}
-          onChanged={() => qc.invalidateQueries({ queryKey: ['photos', crawl.id] })}
+          onChanged={() => {
+            qc.invalidateQueries({ queryKey: ['photos', crawl.id] });
+            qc.invalidateQueries({ queryKey: ['photo-picks', crawl.id] });
+          }}
         />
       ) : null}
     </div>
@@ -172,6 +196,7 @@ function Viewer({
   meId,
   stopName,
   onChanged,
+  canPick,
 }: {
   photos: PhotoDTO[];
   index: number;
@@ -181,6 +206,7 @@ function Viewer({
   meId?: string;
   stopName: (id: string | null) => string;
   onChanged: () => void;
+  canPick: boolean;
 }) {
   const toast = useToast();
   const p = photos[index];
@@ -194,6 +220,11 @@ function Viewer({
     const k = (e: KeyboardEvent) => (e.key === 'ArrowRight' ? go(1) : e.key === 'ArrowLeft' ? go(-1) : e.key === 'Escape' ? onClose() : null);
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
+  });
+  const pick = useMutation({
+    mutationFn: (featured: boolean) => api.featurePhoto(crawl.id, p.id, featured),
+    onSuccess: (dto) => (onChanged(), toast({ title: dto.featured ? 'Added to picks' : 'Removed from picks' })),
+    onError: (e) => toast({ title: errorMessage(e) }),
   });
   const del = useMutation({ mutationFn: () => api.deletePhoto(crawl.id, p.id), onSuccess: () => (onChanged(), photos.length > 1 ? onIndex(Math.max(0, index - 1)) : onClose()), onError: (e) => toast({ title: errorMessage(e) }) });
   const hide = useMutation({ mutationFn: (hidden: boolean) => api.setPhotoHidden(crawl.id, p.id, hidden), onSuccess: () => (onChanged(), toast({ title: 'Updated' })), onError: (e) => toast({ title: errorMessage(e) }) });
@@ -244,6 +275,11 @@ function Viewer({
         {mine || crawl.permissions.canDelete ? (
           <Button variant="secondary" size="sm" loading={del.isPending} onClick={() => confirm('Delete this photo for everyone?') && del.mutate()}>
             <Trash2 className="size-4" /> Delete
+          </Button>
+        ) : null}
+        {canPick && p.status === 'ready' ? (
+          <Button variant={p.featured ? 'primary' : 'secondary'} size="sm" loading={pick.isPending} onClick={() => pick.mutate(!p.featured)}>
+            <Star className={`size-4 ${p.featured ? 'fill-current' : ''}`} /> {p.featured ? 'Picked' : 'Pick'}
           </Button>
         ) : null}
         {crawl.permissions.canModeratePhotos ? (

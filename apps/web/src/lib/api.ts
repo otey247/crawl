@@ -12,6 +12,8 @@ import type {
   NotificationDTO,
   PhotoDTO,
   PreferenceTag,
+  RecapDTO,
+  RideBoardDTO,
   RouteDTO,
   ScheduleFix,
   SpecialDTO,
@@ -173,6 +175,21 @@ export const api = {
   savePushSubscription: (b: { endpoint: string; keys: { p256dh: string; auth: string } }) => post<{ ok: true }>('/me/push-subscriptions', b),
   deletePushSubscription: (endpoint: string) => request<{ ok: true }>('DELETE', '/me/push-subscriptions', { endpoint }),
   homeSafe: (id: string) => post<{ ok: true; homeSafeAt: string }>(`/crawls/${id}/home-safe`),
+
+  // tier 2: rides, photographer picks, catch-up, recap
+  rides: (id: string) => get<RideBoardDTO>(`/crawls/${id}/rides`),
+  offerRide: (id: string, b: { seats: number; area: string; leavingNote?: string | null }) => put<RideBoardDTO>(`/crawls/${id}/rides/offer`, b),
+  cancelOffer: (id: string) => del<RideBoardDTO>(`/crawls/${id}/rides/offer`),
+  requestRide: (id: string, b: { destination: string; partySize: number }) => put<RideBoardDTO>(`/crawls/${id}/rides/request`, b),
+  cancelRequest: (id: string) => del<RideBoardDTO>(`/crawls/${id}/rides/request`),
+  seatRider: (id: string, offerId: string, userId: string) => post<RideBoardDTO>(`/crawls/${id}/rides/offers/${offerId}/riders`, { userId }),
+  unseatRider: (id: string, offerId: string, userId: string) => del<RideBoardDTO>(`/crawls/${id}/rides/offers/${offerId}/riders/${userId}`),
+  photoPicks: (id: string) => get<PhotoDTO[]>(`/crawls/${id}/photos/picks`),
+  featurePhoto: (id: string, photoId: string, featured: boolean) => post<PhotoDTO>(`/crawls/${id}/photos/${photoId}/feature`, { featured }),
+  catchUp: (id: string, pos?: { lat: number; lng: number }) => post<{ stopId: string; stopName: string; walkMin: number | null }>(`/crawls/${id}/catch-up`, pos ?? {}),
+  cancelCatchUp: (id: string) => del<{ ok: true }>(`/crawls/${id}/catch-up`),
+  recap: (id: string) => get<RecapDTO>(`/crawls/${id}/recap`),
+  recapCardUrl: (id: string) => `${BASE}/v1/crawls/${id}/recap/card.png`,
 };
 
 /** Authenticated binary download (album zip). */

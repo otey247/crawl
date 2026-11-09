@@ -14,10 +14,20 @@ Plan a pub crawl on open-source maps, invite your crew, and run it live. It laun
 - **Push notifications** (Web Push): a nudge to people who RSVP'd Maybe the day before, a heads-up an hour before start, "group is heading to X" when the group leaves a stop, live specials alerts, and a home-safe check after the crawl.
 - **Safety card.** Call 911, the 988 Lifeline, the crawl's Designated Driver, Uber or Lyft, and two local cab companies (numbers checked against each company's own site). You can also share your location as a map link. After the crawl, members tap **I'm home**, and the organizer sees who hasn't confirmed yet.
 - **Link previews.** Invite and public crawl links show a title, date, first stop and a generated share image in iMessage, WhatsApp, Slack and similar apps.
+- **Crew roles that do something.**
+  - **Navigator:** leads the group's location and gets walking directions to the next stop.
+  - **Designated Drivers:** run a ride board. They offer seats toward an area, and people ask for a ride home (neighborhood, not an address) and take a seat. Seat counts are enforced, and drivers and riders get push notifications. Only Designated Drivers can offer rides.
+  - **Photographer:** picks the album's best shots. The picks show first in the gallery and feed the recap.
+- **Catch up to the group.** Anyone not with the group sees where it is, how far away it is and walking directions. **On my way** posts to chat and alerts the organizer and co-hosts. If the group moves on, they're redirected to the next stop. Arrival is confirmed in chat when they check in, or when their shared location reaches the bar.
+- **Post-crawl recap.** Shows the route walked, the bars, distance, time out, specials caught, check-ins, the best photos and the crew. A shareable 4:5 card includes the route sketch and the numbers but no one's photos or names.
 
 | Explore | Live crawl | Safety | Offline |
 | --- | --- | --- | --- |
 | ![Explore](docs/screens/explore.png) | ![Live](docs/screens/live.png) | ![Safety](docs/screens/safety.png) | ![Offline](docs/screens/offline.png) |
+
+| Ride board | Catch up | Photographer's picks | Recap |
+| --- | --- | --- | --- |
+| ![Ride board](docs/screens/ride-board.png) | ![Catch up](docs/screens/catch-up.png) | ![Picks](docs/screens/photographer-picks.png) | ![Recap](docs/screens/recap.png) |
 
 Invite links preview with a generated share card:
 

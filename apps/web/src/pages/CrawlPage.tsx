@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CalendarDays, Globe, Images, Lock, MapPin, Pencil, Play, Share2, Trash2, UserPlus } from 'lucide-react';
+import { CalendarDays, Globe, Images, Lock, MapPin, Pencil, Play, Share2, Sparkles, Trash2, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import type { CrawlDetailDTO } from '@crawl/core';
@@ -108,6 +108,15 @@ function CrawlOverview({ crawl, tab, onTab }: { crawl: CrawlDetailDTO; tab: Craw
         {/* Primary actions */}
         <div className="mt-5 space-y-3">
           {ended && p.isMember ? <HomeSafeCard crawl={crawl} /> : null}
+          {ended && p.isMember ? (
+            <Link to={`/crawls/${crawl.id}/recap`} className="flex items-center gap-3 rounded-3xl bg-amber p-4 text-amber-ink">
+              <Sparkles className="size-6 shrink-0" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[17px] font-semibold">Your recap is ready</span>
+                <span className="block text-[14px] text-[#5a4210]">The route, the bars, the best photos, and a card to share.</span>
+              </span>
+            </Link>
+          ) : null}
           {p.isMember && !ended ? <PushPrompt /> : null}
           {!p.isMember && !ended ? (
             me ? (

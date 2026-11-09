@@ -158,6 +158,14 @@ async function main() {
   });
   await query(`update memberships set crew_role = 'designated_driver' where crawl_id = $1 and user_id = $2`, [saturday, users[3]]);
   await query(`update memberships set crew_role = 'navigator', role = 'co_host' where crawl_id = $1 and user_id = $2`, [saturday, maya]);
+  await query(`update memberships set crew_role = 'photographer' where crawl_id = $1 and user_id = $2`, [saturday, sam]);
+  // Priya (Designated Driver) is driving the van back toward the Central West End.
+  const offer = await one(
+    `insert into ride_offers (crawl_id, driver_id, seats, area, leaving_note) values ($1, $2, 4, 'Central West End', 'After the last stop') returning id`,
+    [saturday, users[3]],
+  );
+  await query(`insert into ride_requests (crawl_id, user_id, destination, party_size, offer_id) values ($1, $2, 'Central West End', 2, $3)`, [saturday, users[4], offer!.id]);
+  await query(`insert into ride_requests (crawl_id, user_id, destination, party_size) values ($1, $2, 'Tower Grove South', 1)`, [saturday, users[6]]);
   const routeId = await createRouteJob(saturday, alex, { tags: ['specials'], note: null });
   await runRouteJob(routeId);
   await approveRoute(saturday, routeId);

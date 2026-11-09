@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Car, Check, HeartHandshake, House, Phone, Share2, ShieldPlus, Siren } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { CrawlDetailDTO } from '@crawl/core';
 import { CrewBadge } from '../components/domain';
 import { Avatar, Button, Sheet, errorMessage, useToast } from '../components/ui';
@@ -25,6 +26,7 @@ export function SafetyButton({ crawl, className = '' }: { crawl: CrawlDetailDTO;
 
 export function SafetySheet({ crawl, open, onClose }: { crawl: CrawlDetailDTO; open: boolean; onClose: () => void }) {
   const toast = useToast();
+  const nav = useNavigate();
   const geo = useGeolocation(false);
   const s = crawl.safety;
   const drivers = crawl.members.filter((m) => m.crewRole === 'designated_driver');
@@ -78,6 +80,23 @@ export function SafetySheet({ crawl, open, onClose }: { crawl: CrawlDetailDTO; o
                 </div>
               </div>
             ))}
+            {crawl.permissions.isMember ? (
+              <button
+                onClick={() => {
+                  onClose();
+                  nav(`/crawls/${crawl.id}?tab=people`);
+                }}
+                className="flex w-full items-center gap-3 rounded-2xl bg-raised px-4 py-3.5 text-left"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ink text-amber">
+                  <Car className="size-5" />
+                </span>
+                <span>
+                  <span className="block text-[16px] font-semibold">Ride board</span>
+                  <span className="block text-[13px] text-dim">Seats with this crawl’s Designated Drivers</span>
+                </span>
+              </button>
+            ) : null}
             {s.rideApps.map((r) => row(r.url, <Car className="size-5" />, r.name, 'Open the app to request a ride'))}
             {s.cabs.map((c) => row(`tel:${c.phone}`, <Phone className="size-5" />, c.name, fmtPhone(c.phone)))}
           </>

@@ -8,6 +8,9 @@ import { badRequest, conflict, forbidden, notFound } from '../lib/errors.js';
 import { UUID_PARAM } from '../lib/ids.js';
 import {
   applyFix,
+  cancelCatchUp,
+  caughtUp,
+  startCatchUp,
   endCrawl,
   handlePosition,
   liveStateFor,
@@ -150,9 +153,27 @@ export async function liveRoutes(app: FastifyInstance) {
       [id, stopId, stop.venue_id, uid],
     );
     if (!row) throw conflict('Already checked in here');
+    await caughtUp(id, uid, stopId);
     const member = await loadMember(id, uid);
     emitToCrawl(id, 'member.updated', member);
     return { ok: true, checkedInAt: row.checked_in_at };
+  });
+
+  /** "On my way" for a member walking to meet the group. */
+  app.post('/crawls/:id/catch-up', { preHandler: app.authenticate }, async (req) => {
+    const { id } = Params.parse(req.params);
+    const uid = userId(req);
+    await requireRole(id, uid, 'member');
+    const body = z.object({ lat: z.number().min(-90).max(90).optional(), lng: z.number().min(-180).max(180).optional() }).parse(req.body ?? {});
+    return startCatchUp(id, uid, body.lat != null && body.lng != null ? { lat: body.lat, lng: body.lng } : null);
+  });
+
+  app.delete('/crawls/:id/catch-up', { preHandler: app.authenticate }, async (req) => {
+    const { id } = Params.parse(req.params);
+    const uid = userId(req);
+    await requireRole(id, uid, 'member');
+    await cancelCatchUp(id, uid);
+    return { ok: true };
   });
 
   app.get('/crawls/:id/check-ins/me', { preHandler: app.authenticate }, async (req) => {

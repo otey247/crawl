@@ -5,6 +5,7 @@ import { CREW_ROLES, type CrawlDetailDTO, type CrewRole, type MemberDTO, type Rs
 import { CREW_META, CrewBadge, RoleBadge, RsvpStatus } from '../components/domain';
 import { Avatar, Button, Segmented, Sheet, errorMessage, useToast } from '../components/ui';
 import { api } from '../lib/api';
+import { RideBoard } from './Rides';
 import { useAuth } from '../lib/auth';
 
 export function RsvpToggle({ crawl }: { crawl: CrawlDetailDTO }) {
@@ -45,7 +46,9 @@ export function People({ crawl }: { crawl: CrawlDetailDTO }) {
 
   return (
     <div className="space-y-6">
-      <RsvpToggle crawl={crawl} />
+      {/* Before the crawl, RSVP sits above the tabs on the crawl page; live, this is its home. */}
+      {crawl.status === 'live' ? <RsvpToggle crawl={crawl} /> : null}
+      {crawl.status !== 'draft' ? <RideBoard crawl={crawl} /> : null}
 
       <div className="grid grid-cols-3 gap-2 text-center">
         {(['going', 'maybe', 'declined'] as Rsvp[]).map((r) => (
@@ -150,7 +153,7 @@ function MemberSheet({ crawl, member, onClose }: { crawl: CrawlDetailDTO; member
                 >
                   <Icon className={`size-5 ${active ? '' : 'text-amber'}`} />
                   <span className="flex-1 text-[16px] font-semibold">{r.label}</span>
-                  <span className={`text-[13px] ${active ? 'text-[#4a4741]' : 'text-dim'}`}>{active ? 'Assigned · tap to clear' : holder ? `Replaces ${holder.user.displayName.split(' ')[0]}` : ''}</span>
+                  <span className={`text-[13px] ${active ? 'text-[#4a4741]' : 'text-dim'}`}>{active ? 'Assigned · tap to clear' : holder ? (r.id === 'designated_driver' ? `Also: ${holder.user.displayName.split(' ')[0]}` : `Replaces ${holder.user.displayName.split(' ')[0]}`) : ''}</span>
                 </button>
               );
             })}

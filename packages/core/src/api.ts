@@ -113,6 +113,8 @@ export interface MemberDTO {
   checkInCount: number;
   /** Set when the member confirms they got home after the crawl. */
   homeSafeAt: string | null;
+  /** Set while the member is walking to catch up with the group. */
+  catchingUpSince: string | null;
 }
 
 export interface RouteLegDTO {
@@ -257,6 +259,10 @@ export interface PhotoDTO {
   status: PhotoStatus;
   createdAt: string;
   reportCount: number;
+  /** Picked by the Photographer (or a host) — shown first and used in the recap. */
+  featured: boolean;
+  /** Uploaded by whoever holds the Photographer badge. */
+  byPhotographer: boolean;
 }
 
 export interface MessageDTO {
@@ -321,11 +327,13 @@ export interface ServerToClientEvents {
   'route.approved': (p: { crawlId: string; routeId: string; stopOrder: string[] }) => void;
   'photo.added': (p: PhotoDTO) => void;
   'photo.removed': (p: { photoId: string }) => void;
+  'photo.updated': (p: PhotoDTO) => void;
   'member.joined': (p: { userId: string; displayName: string }) => void;
   'member.updated': (p: MemberDTO) => void;
   'member.removed': (p: { userId: string }) => void;
   'chat.message': (p: MessageDTO) => void;
   'crawl.updated': (p: { crawlId: string }) => void;
+  'rides.updated': (p: { crawlId: string }) => void;
   'crawl.ended': (p: { endedAt: string; photoCount: number }) => void;
   notification: (p: NotificationDTO) => void;
 }
@@ -335,4 +343,62 @@ export interface ClientToServerEvents {
   'crawl.leave': (crawlId: string) => void;
   'position.update': (p: { crawlId: string; lat: number; lng: number; accuracyM?: number; at?: string }) => void;
   'chat.send': (p: { crawlId: string; body: string }, ack: (res: { ok: boolean; message?: MessageDTO; error?: string }) => void) => void;
+}
+
+export interface RideOfferDTO {
+  id: string;
+  driver: UserDTO;
+  seats: number;
+  seatsLeft: number;
+  area: string;
+  leavingNote: string | null;
+  riders: { user: UserDTO; destination: string; partySize: number }[];
+}
+
+export interface RideRequestDTO {
+  user: UserDTO;
+  destination: string;
+  partySize: number;
+  offerId: string | null;
+  createdAt: string;
+}
+
+export interface RideBoardDTO {
+  offers: RideOfferDTO[];
+  /** Requests not yet matched to a driver. */
+  waiting: RideRequestDTO[];
+  mine: RideRequestDTO | null;
+  myOffer: RideOfferDTO | null;
+  canOffer: boolean;
+}
+
+export interface RecapDTO {
+  crawl: { id: string; title: string; startAt: string; endedAt: string | null; timezone: string; neighborhood: string | null };
+  stops: {
+    stopId: string;
+    name: string;
+    category: VenueDTO['category'];
+    imageUrl: string | null;
+    lat: number;
+    lng: number;
+    arrivedAt: string;
+    departedAt: string | null;
+    checkIns: number;
+    specialsCaught: string[];
+    iCheckedIn: boolean;
+  }[];
+  skipped: string[];
+  totals: {
+    stopsVisited: number;
+    distanceM: number;
+    durationS: number;
+    specialsCaught: number;
+    checkIns: number;
+    photos: number;
+    going: number;
+    homeSafe: number;
+  };
+  route: [number, number][];
+  photos: PhotoDTO[];
+  crew: { role: CrewRole; user: UserDTO }[];
 }

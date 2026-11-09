@@ -259,6 +259,7 @@ export function memberDTO(r: any): MemberDTO {
     joinedAt: r.joined_at,
     checkInCount: Number(r.check_in_count ?? 0),
     homeSafeAt: r.home_safe_at ?? null,
+    catchingUpSince: r.catching_up_since ?? null,
   };
 }
 
@@ -417,13 +418,20 @@ export function photoDTO(r: any): PhotoDTO {
     status: r.status,
     createdAt: r.created_at,
     reportCount: Number(r.report_count ?? 0),
+    featured: !!r.featured_at,
+    byPhotographer: !!r.by_photographer,
   };
 }
 
+/** Columns for photoDTO: uploader, report count, and whether the uploader is the Photographer. */
+export const PHOTO_SELECT = `select p.*, u.display_name, u.avatar_url,
+  (select count(*) from photo_reports pr where pr.photo_id = p.id) as report_count,
+  exists (select 1 from memberships pm where pm.crawl_id = p.crawl_id and pm.user_id = p.uploader_id and pm.crew_role = 'photographer') as by_photographer
+  from photos p join users u on u.id = p.uploader_id`;
+
 export async function loadPhoto(id: string): Promise<PhotoDTO | null> {
   const r = await one(
-    `select p.*, u.display_name, u.avatar_url, (select count(*) from photo_reports pr where pr.photo_id = p.id) as report_count
-     from photos p join users u on u.id = p.uploader_id where p.id = $1`,
+    `${PHOTO_SELECT} where p.id = $1`,
     [id],
   );
   return r ? photoDTO(r) : null;
